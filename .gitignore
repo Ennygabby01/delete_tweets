@@ -27,6 +27,5 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
-
 .claudeignore
 prompt.md
