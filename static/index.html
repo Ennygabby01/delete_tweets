@@ -212,10 +212,10 @@
     }
 
     .btn-disconnect {
-      display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+      display: flex; align-items: center; justify-content: flex-start; gap: 18px;
       padding: 11px 12px; border-radius: 9999px;
-      background: none; border: none;
-      font-size: 17px; font-weight: 700; color: var(--muted);
+      background: none; border: none; text-align: left;
+      font-size: 17px; font-weight: 400; color: var(--text);
       cursor: pointer; transition: color .15s, background .15s; width: 100%;
     }
     .btn-disconnect:hover { color: var(--red); background: var(--red-dim); }
@@ -291,6 +291,21 @@
     .badge-site { color: var(--blue); background: var(--blue-dim); }
     .badge-kw   { color: #a78bfa; background: rgba(167,139,250,0.12); }
     .badge-src  { color: var(--muted); background: rgba(255,255,255,0.06); }
+
+    /* ── RATE LIMIT BANNER ────────────────── */
+    .rate-limit-banner {
+      margin: 12px 16px;
+      background: rgba(255,112,67,0.08);
+      border: 1px solid rgba(255,112,67,0.28);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .rate-limit-banner svg { width: 18px; height: 18px; color: var(--orange); flex-shrink: 0; margin-top: 1px; }
+    .rate-limit-banner-body { flex: 1; }
+    .rate-limit-banner-title { font-size: 14px; font-weight: 700; color: var(--orange); margin-bottom: 2px; }
+    .rate-limit-banner-msg   { font-size: 13px; color: var(--muted); line-height: 1.6; }
+    .rate-limit-banner-msg strong { color: var(--text); font-family: monospace; font-size: 15px; letter-spacing: .5px; }
 
     /* ── ERROR BANNER ─────────────────────── */
     .error-banner {
@@ -665,7 +680,7 @@
             <span x-show="selectingAll">Loading…</span>
           </button>
           <button class="btn btn-ghost" x-show="Object.keys(selectedIds).length > 0" @click="clearSelection()">Clear</button>
-          <button class="btn btn-red" x-show="Object.keys(selectedIds).length > 0" @click="showDeleteModal = true">
+          <button class="btn btn-red" x-show="Object.keys(selectedIds).length > 0" @click="showDeleteModal = true" :disabled="!!rateLimitUntil" :title="rateLimitUntil ? 'Rate limited — wait ' + rateLimitCountdown : ''">
             Delete <span x-text="Object.keys(selectedIds).length"></span>
           </button>
         </div>
@@ -678,6 +693,17 @@
           <span class="t-sm t-muted">Select page</span>
         </div>
         <span class="t-sm t-muted" x-text="tweets.length + ' shown · ' + total.toLocaleString() + ' total'"></span>
+      </div>
+    </div>
+
+    <!-- Rate limit countdown -->
+    <div class="rate-limit-banner" x-show="rateLimitUntil" x-cloak>
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div class="rate-limit-banner-body">
+        <div class="rate-limit-banner-title">Rate limit reached</div>
+        <div class="rate-limit-banner-msg">X API limit hit — you can resume deleting in <strong x-text="rateLimitCountdown"></strong></div>
       </div>
     </div>
 
@@ -885,7 +911,7 @@
           </div>
           <div class="how-card">
             <div class="how-card-num">Step 4</div>
-            <div class="how-card-text">Deletions go through the X API, paced at 1 every 3.5s — safely under the 300/15 min rate limit.</div>
+            <div class="how-card-text">Deletions go through the X API, paced at 1 every 20s — safely under the free-tier rate limit (~45/15 min).</div>
           </div>
         </div>
       </div>
@@ -1023,7 +1049,7 @@
     </p>
 
     <div class="eta-note" x-show="!deleteProgress">
-      Estimated time: <strong x-text="etaLabel()"></strong> &nbsp;·&nbsp; paced at 1 tweet / 3.5s
+      Estimated time: <strong x-text="etaLabel()"></strong> &nbsp;·&nbsp; paced at 1 tweet / 20s
     </div>
 
     <div class="prog" x-show="deleteProgress">
@@ -1097,6 +1123,10 @@ function app() {
 
     uploadDragging: false,
     uploadLoading: false,
+
+    rateLimitUntil: null,
+    rateLimitCountdown: '',
+    _rateLimitTimer: null,
 
     toast: null,
     _toastTimer: null,
@@ -1276,7 +1306,7 @@ function app() {
     // ── Delete ─────────────────────────────────────
     etaLabel() {
       const n = Object.keys(this.selectedIds).length;
-      const secs = n * 3.5;
+      const secs = n * 20;
       if (secs < 60) return `~${Math.ceil(secs)}s`;
       return `~${Math.ceil(secs / 60)} min`;
     },
@@ -1286,6 +1316,7 @@ function app() {
       if (!ids.length) return;
       this.deleting = true;
       this.deleteProgress = { done: 0, failed: 0, total: ids.length };
+      let rateLimited = false;
 
       for (let i = 0; i < ids.length; i++) {
         try {
@@ -1308,21 +1339,29 @@ function app() {
           };
           // Surface API-level errors (e.g. rate limit, no permissions, tweet not found)
           if (data.failed.length > 0) {
-            this.showToast(data.failed[0]?.error || 'Delete failed', 'error');
+            const errMsg = data.failed[0]?.error || 'Delete failed';
+            this.showToast(errMsg, 'error');
+            if (errMsg.toLowerCase().includes('rate limit')) {
+              rateLimited = true;
+              this.startRateLimitCountdown();
+              break;
+            }
           }
         } catch (e) {
           this.deleteProgress = { ...this.deleteProgress, failed: this.deleteProgress.failed + 1 };
           this.showToast(e?.message || 'Delete error — check credentials', 'error');
         }
-        if (i < ids.length - 1) await new Promise(r => setTimeout(r, 3500));
+        if (i < ids.length - 1) await new Promise(r => setTimeout(r, 20000));
       }
 
       const { done, failed } = this.deleteProgress;
-      this.showToast(`Deleted ${done}${failed ? ` · ${failed} failed` : ''}`, failed ? 'error' : 'success');
+      if (!rateLimited) {
+        this.showToast(`Deleted ${done}${failed ? ` · ${failed} failed` : ''}`, failed ? 'error' : 'success');
+        this.selectedIds = {};
+      }
       this.deleting = false;
       this.showDeleteModal = false;
       this.deleteProgress = null;
-      this.selectedIds = {};
       await Promise.all([ this.fetchStats(), this.fetchTweets(this.currentPage) ]);
     },
 
@@ -1354,6 +1393,27 @@ function app() {
         await Promise.all([ this.fetchStats(), this.fetchTweets(1) ]);
       } catch { this.showToast('Upload failed — check the file and try again', 'error'); }
       finally { this.uploadLoading = false; }
+    },
+
+    // ── Rate limit countdown ────────────────────────
+    startRateLimitCountdown(ms = 15 * 60 * 1000) {
+      if (this._rateLimitTimer) clearInterval(this._rateLimitTimer);
+      this.rateLimitUntil = Date.now() + ms;
+      const tick = () => {
+        const remaining = this.rateLimitUntil - Date.now();
+        if (remaining <= 0) {
+          clearInterval(this._rateLimitTimer);
+          this._rateLimitTimer = null;
+          this.rateLimitUntil = null;
+          this.rateLimitCountdown = '';
+          return;
+        }
+        const m = Math.floor(remaining / 60000);
+        const s = Math.floor((remaining % 60000) / 1000);
+        this.rateLimitCountdown = `${m}:${String(s).padStart(2, '0')}`;
+      };
+      tick();
+      this._rateLimitTimer = setInterval(tick, 1000);
     },
 
     // ── Helpers ────────────────────────────────────

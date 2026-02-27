@@ -25,7 +25,7 @@ Tweet Deleter reads your local Twitter/X data archive (`tweets.js`) and lets you
 - **Filter by domain** — finds tweets where your target domain appears in the tweet text *or* in any linked URL (even `t.co` shortened ones are expanded and checked)
 - **Filter by keyword** — matches tweets that contain specific words or phrases in the tweet text, case-insensitively
 - **Review before deleting** — browse all matched tweets, select individually, by page, or all at once
-- **Safe deletion rate** — paced at one tweet every 3.5 seconds, safely under the X API rate limit of 300 deletions per 15 minutes
+- **Safe deletion rate** — paced at one tweet every 20 seconds, safely under the X API free-tier rate limit (~45/15 min)
 - **Upload archive in-browser** — drop your `tweets.js` file directly into the Settings page if you can't place it in the project folder
 - **Persistent credentials** — your API keys are saved to a local `credentials.json` so you don't need to re-enter them every time the server restarts; clicking Disconnect deletes the file
 - **Persistent filters** — your target sites and keywords are saved to `filters.json` and restored automatically on restart; they are not cleared when you disconnect
@@ -113,7 +113,7 @@ Switch to the **Tweets** tab to see all matched tweets. You can:
 - Use **Select all** to select every matched tweet across all pages
 - Use the search bar to narrow the list further before selecting
 
-Once you have a selection, click **Delete** and confirm. Deletions are paced at 1 every 3.5 seconds. The progress bar shows real-time status, including any failures.
+Once you have a selection, click **Delete** and confirm. Deletions are paced at 1 every 20 seconds. The progress bar shows real-time status, including any failures.
 
 ### 5. Disconnect
 Click **Disconnect** in the left sidebar, or go to **Settings → Account** on any screen size (including mobile). This clears the in-memory session and deletes `credentials.json` from disk. Your target sites and keywords are preserved in `filters.json` and will be restored on next login.
@@ -161,7 +161,7 @@ Frontend uses [Alpine.js](https://alpinejs.dev) (loaded from CDN, no build step)
 - **Archive only, not live timeline** — Tweet Deleter reads your static archive, not your live account. If you've posted tweets since the archive was generated, they won't appear here.
 - **No undo** — deletions via the X API are permanent. There is no way to recover deleted tweets.
 - **One archive at a time** — the server caches the parsed archive in memory. Uploading a new `tweets.js` replaces it (server restart not required).
-- **Rate limits** — X's API allows 300 tweet deletions per 15 minutes. The 3.5-second delay between deletions keeps you safely under this limit.
+- **Rate limits** — X's free-tier API allows roughly 25–50 tweet deletions per 15 minutes. The 20-second delay between deletions keeps you safely under this limit.
 - **Personal API credentials required** — X does not provide a public OAuth flow for deletion tools. You must use your own developer account credentials.
 
 ---
