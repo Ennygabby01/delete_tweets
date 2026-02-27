@@ -156,7 +156,7 @@ Frontend uses [Alpine.js](https://alpinejs.dev) (loaded from CDN, no build step)
 
 ---
 
-## Limitations
+## Limitations (Important)
 
 - **Archive only, not live timeline** — Tweet Deleter reads your static archive, not your live account. If you've posted tweets since the archive was generated, they won't appear here.
 - **No undo** — deletions via the X API are permanent. There is no way to recover deleted tweets.
