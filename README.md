@@ -16,11 +16,15 @@ The web UI accepts your X Developer API credentials (Consumer Key, Consumer Secr
 
 **Run this exclusively on `localhost` on your own machine.** Treat it the same as you would a local password manager — it is not designed to be internet-facing.
 
+This project contains no analytics, tracking, or external data collection.
+
 ---
 
 ## What It Does
 
 Tweet Deleter reads your local Twitter/X data archive (`tweets.js`) and lets you bulk-delete matched tweets through the official X API.
+
+Works beyond the X API timeline limit — tweets can be deleted from your entire history using your archive.
 
 - **Filter by domain** — finds tweets where your target domain appears in the tweet text *or* in any linked URL (even `t.co` shortened ones are expanded and checked)
 - **Filter by keyword** — matches tweets that contain specific words or phrases in the tweet text, case-insensitively
