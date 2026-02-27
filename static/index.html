@@ -1,0 +1,1365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tweet Deleter</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.1/dist/cdn.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #000000;
+      --surface:    #0d0f12;
+      --surface-2:  #161b22;
+      --hover:      rgba(255,255,255,0.04);
+      --active:     rgba(255,255,255,0.07);
+      --border:     rgba(255,255,255,0.10);
+      --text:       #e7e9ea;
+      --muted:      #71767b;
+      --dim:        #3d4347;
+      --blue:       #1d9bf0;
+      --blue-dim:   rgba(29,155,240,0.10);
+      --blue-hover: #1a8cd8;
+      --red:        #f4212e;
+      --red-dim:    rgba(244,33,46,0.10);
+      --red-hover:  #d0101c;
+      --green:      #00ba7c;
+      --orange:     #ff7043;
+    }
+
+    html { height: 100%; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      min-height: 100%;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    [x-cloak] { display: none !important; }
+    ::-webkit-scrollbar { width: 0; }
+    button, input { font-family: inherit; }
+
+    /* ── TYPOGRAPHY ───────────────────────── */
+    .t-xl   { font-size: 28px; font-weight: 800; letter-spacing: -.5px; }
+    .t-lg   { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+    .t-md   { font-size: 18px; font-weight: 800; letter-spacing: -.2px; }
+    .t-base { font-size: 15px; }
+    .t-sm   { font-size: 13px; }
+    .t-xs   { font-size: 12px; }
+    .t-muted  { color: var(--muted); }
+    .t-dim    { color: var(--dim); }
+    .t-blue   { color: var(--blue); }
+    .t-red    { color: var(--red); }
+    .t-green  { color: var(--green); }
+    .bold     { font-weight: 700; }
+
+    /* ── INPUTS ───────────────────────────── */
+    .inp {
+      width: 100%;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .inp:focus { border-color: var(--blue); }
+    .inp::placeholder { color: var(--dim); }
+
+    .inp-pill {
+      background: var(--surface);
+      border: 1.5px solid transparent;
+      border-radius: 9999px;
+      padding: 9px 16px 9px 40px;
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      width: 100%;
+      transition: border-color .15s, background .15s;
+    }
+    .inp-pill:focus { border-color: var(--blue); background: var(--bg); }
+    .inp-pill::placeholder { color: var(--muted); }
+
+    .inp-sm {
+      flex: 1;
+      background: transparent;
+      border: 1.5px solid var(--border);
+      border-radius: 9999px;
+      padding: 8px 14px;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .inp-sm:focus { border-color: var(--blue); }
+    .inp-sm::placeholder { color: var(--dim); }
+
+    /* ── BUTTONS ──────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      border: none; cursor: pointer;
+      border-radius: 9999px;
+      font-size: 15px; font-weight: 700;
+      transition: opacity .15s, background .15s;
+      white-space: nowrap;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+
+    .btn-solid  { background: var(--text); color: var(--bg); padding: 10px 24px; }
+    .btn-solid:not(:disabled):hover  { background: rgba(231,233,234,.87); }
+
+    .btn-blue   { background: var(--blue); color: #fff; padding: 10px 20px; }
+    .btn-blue:not(:disabled):hover   { background: var(--blue-hover); }
+
+    .btn-red    { background: var(--red); color: #fff; padding: 9px 18px; font-size: 14px; }
+    .btn-red:not(:disabled):hover    { background: var(--red-hover); }
+
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--text); padding: 9px 18px; font-size: 14px; }
+    .btn-outline:not(:disabled):hover { background: var(--hover); }
+
+    .btn-ghost  { background: transparent; color: var(--muted); border: 1.5px solid var(--border); padding: 7px 14px; font-size: 13px; font-weight: 600; }
+    .btn-ghost:not(:disabled):hover  { color: var(--text); background: var(--hover); }
+
+    .btn-sm-add { background: var(--blue); color: #fff; border: none; border-radius: 9999px; padding: 0 16px; height: 34px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: background .15s; }
+    .btn-sm-add:hover { background: var(--blue-hover); }
+
+    /* ── CHECKBOX / TOGGLE ────────────────── */
+    .chk {
+      width: 18px; height: 18px; flex-shrink: 0;
+      border: 2px solid var(--dim); border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: border-color .15s, background .15s;
+    }
+    .chk.on { border-color: var(--blue); background: var(--blue); }
+    .chk svg { width: 10px; height: 10px; display: none; }
+    .chk.on svg { display: block; }
+
+    /* ── LOGIN PAGE ───────────────────────── */
+    .page-login {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px;
+    }
+    .login-box { width: 100%; max-width: 440px; }
+
+    .login-logo-wrap {
+      display: flex; justify-content: center; margin-bottom: 28px;
+    }
+    .x-logo { width: 34px; height: 34px; fill: var(--text); }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 30px;
+    }
+    .field-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    .field-lbl { display: block; font-size: 11px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    .login-foot { font-size: 12px; color: var(--dim); text-align: center; margin-top: 14px; }
+
+    /* ── APP SHELL ────────────────────────── */
+    .shell {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 252px 1fr 300px;
+      min-height: 100vh;
+    }
+    .shell.no-right { grid-template-columns: 252px 1fr; }
+
+    /* ── LEFT SIDEBAR ─────────────────────── */
+    .nav-sidebar {
+      border-right: 1px solid var(--border);
+      padding: 0 10px;
+      position: sticky; top: 0;
+      height: 100vh; overflow-y: auto;
+      display: flex; flex-direction: column;
+    }
+
+    .nav-logo { padding: 14px 10px 8px; }
+    .nav-logo svg { width: 26px; height: 26px; fill: var(--text); display: block; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 18px;
+      padding: 11px 12px; border-radius: 9999px;
+      font-size: 17px; font-weight: 400; color: var(--text);
+      cursor: pointer; transition: background .15s;
+      background: none; border: none; text-align: left; width: 100%;
+    }
+    .nav-item:hover { background: var(--hover); }
+    .nav-item.active { font-weight: 800; }
+    .nav-item svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+    .nav-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+    .nav-stat { padding: 10px 12px; border-radius: 12px; }
+    .nav-stat:hover { background: var(--hover); cursor: default; }
+    .nav-stat-num { font-size: 20px; font-weight: 800; line-height: 1.1; }
+    .nav-stat-lbl { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+    .nav-spacer { flex: 1; }
+
+    .nav-footer {
+      padding-bottom: 16px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+
+    .btn-disconnect {
+      display: flex; align-items: center; justify-content: flex-start; gap: 12px;
+      padding: 11px 12px; border-radius: 9999px;
+      background: none; border: none;
+      font-size: 17px; font-weight: 700; color: var(--muted);
+      cursor: pointer; transition: color .15s, background .15s; width: 100%;
+    }
+    .btn-disconnect:hover { color: var(--red); background: var(--red-dim); }
+    .btn-disconnect svg { width: 22px; height: 22px; flex-shrink: 0; }
+
+    .nav-credit {
+      padding: 8px 12px;
+      font-size: 12px; color: var(--dim);
+    }
+    .nav-credit a { color: var(--muted); text-decoration: none; transition: color .15s; }
+    .nav-credit a:hover { color: var(--text); }
+
+    /* ── MAIN CONTENT ─────────────────────── */
+    .main { min-height: 100vh; border-right: 1px solid var(--border); }
+
+    .sticky-top {
+      position: sticky; top: 0; z-index: 20;
+      background: rgba(0,0,0,0.82);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .top-bar { padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; }
+    .top-actions { display: flex; align-items: center; gap: 8px; }
+
+    .search-wrap { position: relative; flex: 1; min-width: 0; }
+    .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--muted); pointer-events: none; }
+
+    .sel-bar {
+      padding: 6px 16px 10px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .sel-bar-left { display: flex; align-items: center; gap: 10px; }
+
+    /* ── TWEET CARD ───────────────────────── */
+    .tweet {
+      display: flex; gap: 10px;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer; transition: background .1s;
+    }
+    .tweet:hover { background: var(--hover); }
+    .tweet.sel   { background: rgba(29,155,240,0.04); }
+
+    .t-chk-col { flex-shrink: 0; padding-top: 2px; }
+    .t-chk {
+      width: 20px; height: 20px;
+      border: 2px solid var(--dim); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color .15s, background .15s;
+    }
+    .tweet.sel .t-chk { border-color: var(--blue); background: var(--blue); }
+    .t-chk svg { width: 10px; height: 10px; display: none; }
+    .tweet.sel .t-chk svg { display: block; }
+
+    .t-av-col { flex-shrink: 0; }
+    .t-av {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: var(--surface-2);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .t-av svg { width: 22px; height: 22px; color: var(--dim); }
+
+    .t-body { flex: 1; min-width: 0; }
+    .t-top  { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 3px; }
+    .t-name { font-weight: 700; }
+    .t-sep  { color: var(--dim); }
+    .t-date { font-size: 14px; color: var(--muted); }
+    .t-text { font-size: 15px; line-height: 1.55; word-break: break-word; margin-bottom: 8px; }
+    .t-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .badge { font-size: 12px; border-radius: 9999px; padding: 2px 10px; font-weight: 500; }
+    .badge-site { color: var(--blue); background: var(--blue-dim); }
+    .badge-kw   { color: #a78bfa; background: rgba(167,139,250,0.12); }
+    .badge-src  { color: var(--muted); background: rgba(255,255,255,0.06); }
+
+    /* ── ERROR BANNER ─────────────────────── */
+    .error-banner {
+      margin: 12px 16px;
+      background: var(--red-dim);
+      border: 1px solid rgba(244,33,46,0.25);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .error-banner svg { width: 18px; height: 18px; color: var(--red); flex-shrink: 0; margin-top: 1px; }
+    .error-banner-body { flex: 1; }
+    .error-banner-title { font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 2px; }
+    .error-banner-msg   { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    /* ── STATES ───────────────────────────── */
+    .state-empty {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 60px 32px; gap: 16px; text-align: center;
+    }
+    .state-empty-icon { width: 48px; height: 48px; color: var(--dim); margin-bottom: 4px; }
+
+    .spinner { width: 22px; height: 22px; border: 2px solid var(--border); border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── PAGINATION ───────────────────────── */
+    .pagination {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 20px; border-bottom: 1px solid var(--border);
+    }
+
+    /* ── RIGHT PANEL ──────────────────────── */
+    .right-panel {
+      padding: 16px;
+      position: sticky; top: 0;
+      height: 100vh; overflow-y: auto;
+    }
+    .panel-card {
+      background: var(--surface);
+      border-radius: 16px; padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .site-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 0; border-bottom: 1px solid var(--border);
+    }
+    .site-row:last-child { border-bottom: none; }
+    .site-row-left { display: flex; align-items: center; gap: 8px; }
+    .site-ct { font-size: 12px; color: var(--muted); background: var(--surface-2); border-radius: 9999px; padding: 2px 8px; }
+
+    .btn-site-rm {
+      background: none; border: none;
+      color: var(--dim); cursor: pointer;
+      width: 28px; height: 28px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: color .15s, background .15s;
+    }
+    .btn-site-rm:hover { color: var(--red); background: var(--red-dim); }
+    .btn-site-rm svg { width: 14px; height: 14px; }
+
+    .add-row { display: flex; gap: 8px; margin-top: 12px; }
+
+    /* compact inline add-row for the right panel */
+    .add-inline {
+      display: flex; align-items: center;
+      background: var(--surface-2);
+      border: 1.5px solid var(--border);
+      border-radius: 9999px;
+      padding: 3px 3px 3px 14px;
+      margin-top: 12px;
+      gap: 4px;
+      transition: border-color .15s;
+    }
+    .add-inline:focus-within { border-color: var(--blue); }
+    .add-inline input {
+      flex: 1; min-width: 0;
+      background: transparent; border: none;
+      padding: 5px 0; font-size: 13px;
+      color: var(--text); outline: none;
+    }
+    .add-inline input::placeholder { color: var(--dim); }
+    .add-inline button {
+      background: var(--blue); color: #fff; border: none;
+      border-radius: 9999px; width: 28px; height: 28px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: background .15s;
+    }
+    .add-inline button:hover { background: var(--blue-hover); }
+    .add-inline button svg { width: 14px; height: 14px; }
+
+    /* ── SETTINGS PAGE ────────────────────── */
+    .settings-page { max-width: 640px; padding: 0 24px 48px; }
+
+    .settings-section { padding: 28px 0; border-bottom: 1px solid var(--border); }
+    .settings-section:last-child { border-bottom: none; }
+    .settings-section-title { font-size: 18px; font-weight: 800; letter-spacing: -.2px; margin-bottom: 6px; }
+    .settings-section-desc { font-size: 14px; color: var(--muted); margin-bottom: 20px; line-height: 1.6; }
+
+    .site-list { margin-bottom: 4px; }
+    .site-list-item {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .site-list-item:last-child { border-bottom: none; }
+    .site-list-item-left { display: flex; align-items: center; gap: 12px; }
+    .site-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
+
+    .how-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .how-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px;
+    }
+    .how-card-num { font-size: 13px; font-weight: 700; color: var(--blue); margin-bottom: 6px; }
+    .how-card-text { font-size: 14px; color: var(--muted); line-height: 1.6; }
+
+    .about-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px; padding: 20px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .about-tag { display: inline-flex; align-items: center; gap: 6px; background: rgba(29,155,240,0.08); border: 1px solid rgba(29,155,240,0.15); color: var(--blue); border-radius: 9999px; padding: 3px 12px; font-size: 12px; font-weight: 600; width: fit-content; }
+
+    /* ── UPLOAD DROP ZONE ─────────────────── */
+    .drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+      position: relative;
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--blue); background: var(--blue-dim); }
+    .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .drop-zone-icon { width: 36px; height: 36px; color: var(--dim); margin: 0 auto 10px; }
+    .archive-status {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: 10px;
+      background: var(--surface); border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .archive-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* ── MODAL ────────────────────────────── */
+    .overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100; padding: 24px;
+    }
+    .modal {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 18px; padding: 32px;
+      max-width: 420px; width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,.9);
+    }
+    .modal-actions { display: flex; gap: 12px; }
+    .modal-actions .btn { flex: 1; height: 44px; font-size: 15px; justify-content: center; }
+
+    .eta-note { font-size: 13px; color: var(--muted); margin-bottom: 20px; }
+    .eta-note strong { color: var(--text); }
+
+    .prog { margin-bottom: 20px; }
+    .prog-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+    .prog-bar { width: 100%; height: 3px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+    .prog-fill { height: 100%; background: var(--red); border-radius: 2px; transition: width .2s; }
+    .prog-bottom { display: flex; justify-content: space-between; font-size: 12px; margin-top: 6px; }
+
+    /* ── TOAST ────────────────────────────── */
+    .toast-wrap {
+      position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+      z-index: 200; pointer-events: none;
+    }
+    .toast {
+      background: var(--text); color: var(--bg);
+      padding: 11px 24px; border-radius: 9999px;
+      font-size: 14px; font-weight: 700;
+      white-space: nowrap; box-shadow: 0 4px 24px rgba(0,0,0,.6);
+    }
+    .toast.err { background: var(--red); color: #fff; }
+
+    /* ── RESPONSIVE ───────────────────────── */
+    @media (max-width: 1100px) {
+      .shell, .shell.no-right { grid-template-columns: 68px 1fr; }
+      .right-panel { display: none; }
+      .nav-item span { display: none; }
+      .nav-item { justify-content: center; padding: 12px; }
+      .btn-disconnect span { display: none; }
+      .btn-disconnect { justify-content: center; }
+      .nav-stat { display: none; }
+      .nav-credit { display: none; }
+    }
+    @media (max-width: 640px) {
+      html, body { overflow-x: hidden; }
+
+      .shell, .shell.no-right {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+      }
+
+      /* ── Bottom tab bar ─────────────────── */
+      .nav-sidebar {
+        position: fixed; bottom: 0; left: 0; right: 0; top: auto;
+        height: 56px; flex-direction: row; align-items: stretch;
+        border-right: none; border-top: 1px solid var(--border);
+        background: rgba(0,0,0,0.96); backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        z-index: 30; padding: 0; overflow: hidden;
+      }
+      .nav-logo, .nav-divider, .nav-spacer, .nav-stat, .nav-footer, .nav-credit { display: none; }
+      .nav-item {
+        flex: 1; flex-direction: column; justify-content: center; align-items: center;
+        gap: 3px; padding: 4px 0; border-radius: 0;
+      }
+      .nav-item svg { width: 20px; height: 20px; }
+      .nav-item span { display: block; font-size: 10px; font-weight: 600; letter-spacing: .2px; }
+
+      /* ── Main content ───────────────────── */
+      .main { grid-row: 1; min-height: 100vh; border-right: none; padding-bottom: 64px; }
+
+      /* ── Top bar ────────────────────────── */
+      .top-bar { flex-wrap: wrap; gap: 8px; padding: 12px 14px; }
+      .top-actions { width: 100%; flex-wrap: wrap; gap: 6px; }
+      .search-wrap { width: 100%; }
+
+      /* Hide long "Select all (N)" count on mobile to save space */
+      .btn-select-count { display: none; }
+
+      /* ── Sel bar ────────────────────────── */
+      .sel-bar { flex-wrap: wrap; gap: 6px; padding: 6px 14px 10px; }
+
+      /* ── Settings ───────────────────────── */
+      .settings-page { padding: 0 14px 80px; }
+      .field-grid-2 { grid-template-columns: 1fr; }
+      .how-grid { grid-template-columns: 1fr; }
+
+      /* ── Drop zone ──────────────────────── */
+      .drop-zone { padding: 24px 16px; }
+
+      /* ── Toast ──────────────────────────── */
+      .toast { white-space: normal; text-align: center; }
+      .toast-wrap { width: auto; max-width: calc(100vw - 48px); left: 24px; right: 24px; transform: none; bottom: 72px; }
+
+      /* ── Modal ──────────────────────────── */
+      .overlay { padding: 12px; align-items: flex-end; }
+      .modal { padding: 24px 20px; border-radius: 20px 20px 14px 14px; max-height: 88vh; overflow-y: auto; }
+      .modal-actions { gap: 8px; }
+
+      /* ── Pagination ─────────────────────── */
+      .pagination { gap: 8px; }
+    }
+  </style>
+</head>
+<body x-data="app()" x-init="init()" x-cloak>
+
+<!-- ════════════════════════════════════════
+  LOGIN
+════════════════════════════════════════ -->
+<div class="page-login" x-show="ready && !authenticated">
+  <div class="login-box">
+    <div class="login-logo-wrap">
+      <svg class="x-logo" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </div>
+
+    <h1 class="t-xl" style="text-align:center;margin-bottom:6px;">Sign in to delete</h1>
+    <p class="t-base t-muted" style="text-align:center;margin-bottom:28px;">Enter your X Developer API credentials</p>
+
+    <div class="login-card">
+      <div class="field-grid-2">
+        <div>
+          <label class="field-lbl">Consumer Key</label>
+          <input class="inp" type="text" x-model="credentials.consumer_key" @keydown.enter="login()" autocomplete="off" placeholder="API key">
+        </div>
+        <div>
+          <label class="field-lbl">Consumer Secret</label>
+          <input class="inp" type="password" x-model="credentials.consumer_secret" @keydown.enter="login()" autocomplete="off" placeholder="••••••••">
+        </div>
+        <div>
+          <label class="field-lbl">Access Token</label>
+          <input class="inp" type="text" x-model="credentials.access_token" @keydown.enter="login()" autocomplete="off" placeholder="Access token">
+        </div>
+        <div>
+          <label class="field-lbl">Access Token Secret</label>
+          <input class="inp" type="password" x-model="credentials.access_token_secret" @keydown.enter="login()" autocomplete="off" placeholder="••••••••">
+        </div>
+      </div>
+
+      <button class="btn btn-solid" style="width:100%;height:44px;font-size:16px;" @click="login()" :disabled="loginLoading">
+        <span x-show="!loginLoading">Connect</span>
+        <span x-show="loginLoading">Connecting…</span>
+      </button>
+
+      <p class="login-foot">Credentials saved locally to credentials.json — click Disconnect to remove them</p>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  DASHBOARD
+════════════════════════════════════════ -->
+<div class="shell" :class="view === 'settings' ? 'no-right' : ''" x-show="ready && authenticated">
+
+  <!-- ── Left sidebar ── -->
+  <aside class="nav-sidebar">
+    <div class="nav-logo">
+      <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+    </div>
+
+    <button class="nav-item" :class="view==='tweets' ? 'active' : ''" @click="switchView('tweets')">
+      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" :stroke-width="view==='tweets' ? 2.5 : 1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+      </svg>
+      <span>Tweets</span>
+    </button>
+
+    <button class="nav-item" :class="view==='settings' ? 'active' : ''" @click="switchView('settings')">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" :stroke-width="view==='settings' ? 2.5 : 1.8">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+      </svg>
+      <span>Settings</span>
+    </button>
+
+    <hr class="nav-divider">
+
+    <div class="nav-stat" x-show="stats">
+      <div class="nav-stat-num" :class="stats?.matched > 0 ? 't-red' : ''" x-text="(stats?.matched ?? 0).toLocaleString()"></div>
+      <div class="nav-stat-lbl">matched tweets</div>
+    </div>
+    <div class="nav-stat" x-show="stats?.deleted_this_session > 0">
+      <div class="nav-stat-num t-green" x-text="(stats?.deleted_this_session ?? 0).toLocaleString()"></div>
+      <div class="nav-stat-lbl">deleted this session</div>
+    </div>
+    <div class="nav-stat" x-show="Object.keys(selectedIds).length > 0">
+      <div class="nav-stat-num t-blue" x-text="Object.keys(selectedIds).length.toLocaleString()"></div>
+      <div class="nav-stat-lbl">selected</div>
+    </div>
+
+    <div class="nav-spacer"></div>
+
+    <div class="nav-footer">
+      <button class="btn-disconnect" @click="logout()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        <span>Disconnect</span>
+      </button>
+      <div class="nav-credit">
+        Built by <a href="https://github.com/Ennygabby01" target="_blank">GBT3K</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── TWEETS VIEW ── -->
+  <main class="main" x-show="view === 'tweets'">
+    <div class="sticky-top">
+      <div class="top-bar">
+        <span class="t-md">Matched Tweets</span>
+        <div class="top-actions">
+          <div class="search-wrap">
+            <svg class="search-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input class="inp-pill" type="text" x-model="search" @input.debounce.400ms="fetchTweets(1)" placeholder="Search tweets…">
+          </div>
+          <button class="btn btn-ghost" @click="selectAllMatched()" :disabled="selectingAll || total === 0">
+            <span x-show="!selectingAll">Select all <span class="btn-select-count" x-text="total > 0 ? '(' + total + ')' : ''"></span></span>
+            <span x-show="selectingAll">Loading…</span>
+          </button>
+          <button class="btn btn-ghost" x-show="Object.keys(selectedIds).length > 0" @click="clearSelection()">Clear</button>
+          <button class="btn btn-red" x-show="Object.keys(selectedIds).length > 0" @click="showDeleteModal = true">
+            Delete <span x-text="Object.keys(selectedIds).length"></span>
+          </button>
+        </div>
+      </div>
+      <div class="sel-bar" x-show="tweets.length > 0">
+        <div class="sel-bar-left">
+          <div class="chk" :class="isPageFullySelected() ? 'on' : ''" @click="togglePageSelection()">
+            <svg fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="1.5,6 5,9.5 10.5,2.5"/></svg>
+          </div>
+          <span class="t-sm t-muted">Select page</span>
+        </div>
+        <span class="t-sm t-muted" x-text="tweets.length + ' shown · ' + total.toLocaleString() + ' total'"></span>
+      </div>
+    </div>
+
+    <!-- Archive error -->
+    <div class="error-banner" x-show="archiveError">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+      <div class="error-banner-body">
+        <div class="error-banner-title">tweets.js not found</div>
+        <div class="error-banner-msg" x-text="archiveError"></div>
+      </div>
+    </div>
+
+    <!-- No sites configured -->
+    <div class="state-empty" x-show="!loading && sites.length === 0 && keywords.length === 0 && !archiveError">
+      <svg class="state-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+      </svg>
+      <p class="t-base bold">No target sites configured</p>
+      <p class="t-sm t-muted" style="max-width:260px;line-height:1.6;">Add the domains you want to filter by in Settings, then come back here to review and delete.</p>
+      <button class="btn btn-blue" style="margin-top:4px;" @click="switchView('settings')">Go to Settings</button>
+    </div>
+
+    <!-- Loading -->
+    <div class="state-empty" x-show="loading">
+      <div class="spinner"></div>
+      <span class="t-sm t-muted">Loading tweets…</span>
+    </div>
+
+    <!-- No results -->
+    <div class="state-empty" x-show="!loading && tweets.length === 0 && (sites.length > 0 || keywords.length > 0) && !archiveError">
+      <svg class="state-empty-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <p class="t-base bold">No matches found</p>
+      <p class="t-sm t-muted">Try adjusting your target sites, keywords, or search filter.</p>
+    </div>
+
+    <!-- Tweet feed -->
+    <div x-show="!loading && tweets.length > 0">
+      <template x-for="tweet in tweets" :key="tweet.id">
+        <div class="tweet" :class="selectedIds[tweet.id] ? 'sel' : ''" @click="toggleSelect(tweet.id)">
+          <div class="t-chk-col">
+            <div class="t-chk">
+              <svg fill="none" stroke="#fff" stroke-width="2.5" viewBox="0 0 12 12"><polyline points="1.5,6 5,9.5 10.5,2.5"/></svg>
+            </div>
+          </div>
+          <div class="t-av-col">
+            <div class="t-av">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
+            </div>
+          </div>
+          <div class="t-body">
+            <div class="t-top">
+              <span class="t-name">My Account</span>
+              <span class="t-sep">·</span>
+              <span class="t-date" x-text="formatDate(tweet.created_at)"></span>
+            </div>
+            <div class="t-text" x-text="tweet.text"></div>
+            <div class="t-tags">
+              <template x-for="site in tweet.matched_sites" :key="'s-'+site">
+                <span class="badge badge-site" x-text="site"></span>
+              </template>
+              <template x-for="kw in tweet.matched_keywords" :key="'k-'+kw">
+                <span class="badge badge-kw" x-text="'&quot;' + kw + '&quot;'"></span>
+              </template>
+              <span class="badge badge-src" x-show="tweet.source && tweet.source.toLowerCase().includes('jetpack')">WordPress / Jetpack</span>
+            </div>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <div class="pagination" x-show="totalPages > 1 && !loading">
+      <button class="btn btn-outline" @click="fetchTweets(currentPage - 1)" :disabled="currentPage <= 1">← Prev</button>
+      <span class="t-sm t-muted">Page <span x-text="currentPage"></span> of <span x-text="totalPages"></span></span>
+      <button class="btn btn-outline" @click="fetchTweets(currentPage + 1)" :disabled="currentPage >= totalPages">Next →</button>
+    </div>
+  </main>
+
+  <!-- ── SETTINGS VIEW ── -->
+  <main class="main" x-show="view === 'settings'" style="display:none;">
+    <div class="sticky-top">
+      <div class="top-bar">
+        <span class="t-md">Settings</span>
+      </div>
+    </div>
+
+    <div class="settings-page">
+
+      <!-- Target Sites -->
+      <div class="settings-section">
+        <div class="settings-section-title">Target Sites</div>
+        <div class="settings-section-desc">
+          Add domains you want to find in your tweet archive. Tweets are matched if the
+          domain appears in the tweet text <em>or</em> in any linked URL (even t.co shortened ones).
+        </div>
+
+        <div class="site-list" x-show="sites.length > 0">
+          <template x-for="site in sites" :key="site">
+            <div class="site-list-item">
+              <div class="site-list-item-left">
+                <div class="site-dot"></div>
+                <span class="t-base bold" x-text="site"></span>
+                <span class="site-ct" x-text="(stats?.by_site?.[site] ?? 0).toLocaleString() + ' tweets'"></span>
+              </div>
+              <button class="btn-site-rm" @click="removeSite(site)" title="Remove">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </template>
+        </div>
+
+        <div x-show="sites.length === 0" style="padding:16px 0 4px;">
+          <p class="t-sm t-muted">No target sites added yet. Add one below to get started.</p>
+        </div>
+
+        <div class="add-row" style="margin-top:16px;">
+          <input class="inp-sm" type="text" x-model="newSite" @keydown.enter="addSite()" placeholder="e.g. myblog.wordpress.com or mysite.com">
+          <button class="btn-sm-add" @click="addSite()">Add Site</button>
+        </div>
+      </div>
+
+      <!-- Keywords -->
+      <div class="settings-section">
+        <div class="settings-section-title">Keywords</div>
+        <div class="settings-section-desc">
+          Match tweets by words or phrases in the tweet text itself — useful for catching
+          auto-posted content, campaign tags, or specific phrases you want removed.
+          Case-insensitive. Works alongside Target Sites (either match = tweet is listed).
+        </div>
+
+        <div class="site-list" x-show="keywords.length > 0">
+          <template x-for="kw in keywords" :key="kw">
+            <div class="site-list-item">
+              <div class="site-list-item-left">
+                <div class="site-dot" style="background:#a78bfa;"></div>
+                <span class="t-base bold" style="font-family:monospace;font-size:14px;" x-text="'&quot;' + kw + '&quot;'"></span>
+                <span class="site-ct" x-text="(stats?.by_keyword?.[kw] ?? 0).toLocaleString() + ' tweets'"></span>
+              </div>
+              <button class="btn-site-rm" @click="removeKeyword(kw)" title="Remove">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+          </template>
+        </div>
+
+        <div x-show="keywords.length === 0" style="padding:16px 0 4px;">
+          <p class="t-sm t-muted">No keywords added yet.</p>
+        </div>
+
+        <div class="add-row" style="margin-top:16px;">
+          <input class="inp-sm" type="text" x-model="newKeyword" @keydown.enter="addKeyword()" placeholder="e.g. Check out my new post on vistanaij.com.ng">
+          <button class="btn-sm-add" @click="addKeyword()">Add</button>
+        </div>
+      </div>
+
+      <!-- Tweet Archive -->
+      <div class="settings-section">
+        <div class="settings-section-title">Tweet Archive</div>
+        <div class="settings-section-desc">
+          Upload your <strong style="color:var(--text);">tweets.js</strong> file from your Twitter/X data archive.
+          Download your archive from X → Settings → Your account → Download an archive of your data.
+        </div>
+
+        <!-- Status -->
+        <div class="archive-status">
+          <div class="archive-status-dot" :style="archiveError ? 'background:var(--red)' : 'background:var(--green)'"></div>
+          <span class="t-sm" x-text="archiveError ? 'No archive loaded — upload tweets.js below' : (stats ? (stats.total_in_archive.toLocaleString() + ' tweets loaded') : 'Archive loaded')"></span>
+        </div>
+
+        <!-- Drop zone -->
+        <div class="drop-zone"
+             :class="uploadDragging ? 'drag-over' : ''"
+             @dragover.prevent="uploadDragging = true"
+             @dragleave.prevent="uploadDragging = false"
+             @drop.prevent="handleArchiveDrop($event)">
+          <input type="file" accept=".js" @change="handleArchiveFile($event)">
+          <svg class="drop-zone-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+          </svg>
+          <p class="t-base bold" style="margin-bottom:4px;" x-text="uploadDragging ? 'Drop it!' : (uploadLoading ? 'Uploading…' : 'Drop tweets.js here or click to browse')"></p>
+          <p class="t-sm t-muted">Only tweets.js from your X data archive is accepted</p>
+        </div>
+      </div>
+
+      <!-- How it works -->
+      <div class="settings-section">
+        <div class="settings-section-title">How It Works</div>
+        <div class="settings-section-desc">
+          Tweets are loaded from your <strong style="color:var(--text);">local tweets.js archive file</strong> — not live from X.
+          Deletion is the only action that goes through the X API.
+        </div>
+        <div class="how-grid">
+          <div class="how-card">
+            <div class="how-card-num">Step 1</div>
+            <div class="how-card-text">Download your Twitter/X data archive and place <strong>tweets.js</strong> in the app folder. The archive is the data source — no live API reads.</div>
+          </div>
+          <div class="how-card">
+            <div class="how-card-num">Step 2</div>
+            <div class="how-card-text">Add <strong>Target Sites</strong> (domains matched in links) and/or <strong>Keywords</strong> (phrases matched in tweet text). Either match is enough.</div>
+          </div>
+          <div class="how-card">
+            <div class="how-card-num">Step 3</div>
+            <div class="how-card-text">Go to the Tweets tab. Review matched posts, select individually, by page, or all at once, then delete.</div>
+          </div>
+          <div class="how-card">
+            <div class="how-card-num">Step 4</div>
+            <div class="how-card-text">Deletions go through the X API, paced at 1 every 3.5s — safely under the 300/15 min rate limit.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Disconnect -->
+      <div class="settings-section">
+        <div class="settings-section-title">Account</div>
+        <div class="settings-section-desc">
+          Disconnect removes your saved API credentials and clears the active session.
+          Your target sites and keywords are kept for next time.
+        </div>
+        <button class="btn btn-outline" style="color:var(--red);border-color:rgba(244,33,46,0.35);" @click="logout()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          Disconnect
+        </button>
+      </div>
+
+      <!-- About -->
+      <div class="settings-section">
+        <div class="settings-section-title">About</div>
+        <div class="about-card">
+          <div class="about-tag">
+            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            Tweet Deleter
+          </div>
+          <p class="t-sm" style="color:var(--muted);line-height:1.7;">
+            An open-source tool for bulk deleting tweets from your X/Twitter archive by domain or keyword filtering.
+            Deletions happen via the official X API at a safe, rate-limited pace.
+          </p>
+          <div style="display:flex;align-items:center;gap:10px;padding-top:4px;border-top:1px solid var(--border);">
+            <span class="t-sm t-muted">Built by</span>
+            <a href="https://github.com/Ennygabby01" target="_blank" style="font-size:14px;font-weight:700;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:6px;">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+              GBT3K
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── Right panel (tweets view only) ── -->
+  <aside class="right-panel" x-show="view === 'tweets'">
+
+    <div class="panel-card">
+      <div class="t-md" style="margin-bottom:14px;">Target Sites</div>
+
+      <div x-show="sites.length === 0" style="padding:4px 0 8px;">
+        <p class="t-sm t-muted">No sites added. <button @click="switchView('settings')" style="background:none;border:none;color:var(--blue);font-size:13px;font-weight:600;cursor:pointer;padding:0;">Configure →</button></p>
+      </div>
+
+      <template x-for="site in sites" :key="site">
+        <div class="site-row">
+          <div class="site-row-left">
+            <span class="t-sm bold" x-text="site"></span>
+            <span class="site-ct" x-text="(stats?.by_site?.[site] ?? 0) + ' tweets'"></span>
+          </div>
+          <button class="btn-site-rm" @click.stop="removeSite(site)">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </template>
+
+      <div class="add-inline">
+        <input type="text" x-model="newSite" @keydown.enter="addSite()" placeholder="Add a domain…">
+        <button @click="addSite()" title="Add">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Keywords quick panel -->
+    <div class="panel-card">
+      <div class="t-md" style="margin-bottom:14px;">Keywords</div>
+
+      <div x-show="keywords.length === 0" style="padding:4px 0 8px;">
+        <p class="t-sm t-muted">No keywords. <button @click="switchView('settings')" style="background:none;border:none;color:var(--blue);font-size:13px;font-weight:600;cursor:pointer;padding:0;">Add one →</button></p>
+      </div>
+
+      <template x-for="kw in keywords" :key="kw">
+        <div class="site-row">
+          <div class="site-row-left">
+            <span class="t-sm bold" style="font-family:monospace;color:#a78bfa;" x-text="'&quot;'+kw+'&quot;'"></span>
+            <span class="site-ct" x-text="(stats?.by_keyword?.[kw] ?? 0) + ' tweets'"></span>
+          </div>
+          <button class="btn-site-rm" @click.stop="removeKeyword(kw)">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </template>
+
+      <div class="add-inline">
+        <input type="text" x-model="newKeyword" @keydown.enter="addKeyword()" placeholder="Phrase or keyword…">
+        <button @click="addKeyword()" title="Add">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="panel-card" x-show="stats">
+      <div class="t-sm bold" style="margin-bottom:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-size:11px;">Archive Stats</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:10px;">
+          <span class="t-sm t-muted">Total in archive</span>
+          <span class="t-sm bold" x-text="(stats?.total_in_archive ?? 0).toLocaleString()"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:10px;">
+          <span class="t-sm t-muted">Matched</span>
+          <span class="t-sm bold t-red" x-text="(stats?.matched ?? 0).toLocaleString()"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="t-sm t-muted">Deleted this session</span>
+          <span class="t-sm bold t-green" x-text="(stats?.deleted_this_session ?? 0).toLocaleString()"></span>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+</div>
+
+<!-- ════════════════════════════════════════
+  DELETE MODAL
+════════════════════════════════════════ -->
+<div class="overlay" x-show="showDeleteModal" @click.self="if(!deleting){showDeleteModal=false;deleteProgress=null;}">
+  <div class="modal">
+    <p class="t-lg" style="margin-bottom:10px;">Delete tweets?</p>
+    <p class="t-base t-muted" style="margin-bottom:20px;line-height:1.6;">
+      You're about to permanently delete
+      <strong class="t-base" style="color:var(--text);" x-text="Object.keys(selectedIds).length"></strong>
+      tweet<span x-show="Object.keys(selectedIds).length !== 1">s</span>.
+      This <strong style="color:var(--red);">cannot be undone</strong>.
+    </p>
+
+    <div class="eta-note" x-show="!deleteProgress">
+      Estimated time: <strong x-text="etaLabel()"></strong> &nbsp;·&nbsp; paced at 1 tweet / 3.5s
+    </div>
+
+    <div class="prog" x-show="deleteProgress">
+      <div class="prog-row">
+        <span>Progress</span>
+        <span x-text="`${(deleteProgress?.done??0)+(deleteProgress?.failed??0)} / ${deleteProgress?.total??0}`"></span>
+      </div>
+      <div class="prog-bar">
+        <div class="prog-fill" :style="`width:${deleteProgress ? (((deleteProgress.done+deleteProgress.failed)/deleteProgress.total)*100) : 0}%`"></div>
+      </div>
+      <div class="prog-bottom">
+        <span style="color:var(--green);" x-text="`${deleteProgress?.done??0} deleted`"></span>
+        <span style="color:var(--red);" x-show="(deleteProgress?.failed??0)>0" x-text="`${deleteProgress.failed} failed`"></span>
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-outline" @click="showDeleteModal=false;deleteProgress=null" :disabled="deleting">Cancel</button>
+      <button class="btn btn-red" style="height:44px;font-size:15px;" @click="deleteTweets()" :disabled="deleting">
+        <span x-show="!deleting">Delete forever</span>
+        <span x-show="deleting">Deleting…</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+  TOAST
+════════════════════════════════════════ -->
+<div class="toast-wrap" x-show="toast"
+  x-transition:enter="transition ease-out duration-200"
+  x-transition:enter-start="opacity-0 translate-y-2"
+  x-transition:enter-end="opacity-100 translate-y-0"
+  x-transition:leave="transition ease-in duration-150"
+  x-transition:leave-end="opacity-0">
+  <div class="toast" :class="toast?.type==='error'?'err':''" x-text="toast?.message"></div>
+</div>
+
+<script>
+function app() {
+  return {
+    ready: false,
+    authenticated: false,
+    loginLoading: false,
+    view: 'tweets', // 'tweets' | 'settings'
+    credentials: { consumer_key:'', consumer_secret:'', access_token:'', access_token_secret:'' },
+
+    sites: [],
+    newSite: '',
+    keywords: [],
+    newKeyword: '',
+
+    archiveError: null,
+
+    tweets: [],
+    total: 0,
+    currentPage: 1,
+    totalPages: 1,
+    limit: 50,
+    search: '',
+    loading: false,
+
+    selectedIds: {},
+    selectingAll: false,
+
+    stats: null,
+
+    showDeleteModal: false,
+    deleting: false,
+    deleteProgress: null,
+
+    uploadDragging: false,
+    uploadLoading: false,
+
+    toast: null,
+    _toastTimer: null,
+
+    // ── Init ───────────────────────────────────────
+    async init() {
+      const data = await (await fetch('/v1/admin/status')).json();
+      this.authenticated = data.authenticated;
+      if (this.authenticated) await this.loadDashboard();
+      this.ready = true;
+    },
+
+    async loadDashboard() {
+      await Promise.all([ this.fetchSites(), this.fetchKeywords(), this.fetchStats(), this.fetchTweets(1) ]);
+      // Restore last view, or send first-time users to Settings
+      const saved = localStorage.getItem('view');
+      if (saved) {
+        this.view = saved;
+      } else if (this.sites.length === 0 && this.keywords.length === 0) {
+        this.view = 'settings';
+      }
+    },
+
+    switchView(v) {
+      this.view = v;
+      localStorage.setItem('view', v);
+      if (v === 'tweets' && this.sites.length > 0 && this.tweets.length === 0) {
+        this.fetchTweets(1);
+      }
+    },
+
+    // ── Auth ───────────────────────────────────────
+    async login() {
+      const c = this.credentials;
+      if (!c.consumer_key || !c.consumer_secret || !c.access_token || !c.access_token_secret)
+        return this.showToast('Fill in all four credential fields', 'error');
+      this.loginLoading = true;
+      try {
+        const res = await fetch('/v1/admin/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(c),
+        });
+        if (!res.ok) return this.showToast('Login failed', 'error');
+        this.authenticated = true;
+        this.credentials = { consumer_key:'', consumer_secret:'', access_token:'', access_token_secret:'' };
+        await this.loadDashboard();
+      } catch { this.showToast('Cannot reach server', 'error'); }
+      finally { this.loginLoading = false; }
+    },
+
+    async logout() {
+      await fetch('/v1/admin/logout', { method: 'POST' });
+      this.authenticated = false;
+      this.tweets = []; this.stats = null; this.selectedIds = {};
+    },
+
+    // ── Sites ──────────────────────────────────────
+    async fetchSites() {
+      this.sites = (await (await fetch('/v1/admin/sites')).json()).sites;
+    },
+
+    async addSite() {
+      const pattern = this.newSite.trim();
+      if (!pattern) return;
+      this.sites = (await (await fetch('/v1/admin/sites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pattern }),
+      })).json()).sites;
+      this.newSite = '';
+      await Promise.all([ this.fetchStats(), this.fetchTweets(1) ]);
+    },
+
+    async removeSite(pattern) {
+      this.sites = (await (await fetch(`/v1/admin/sites/${encodeURIComponent(pattern)}`, { method: 'DELETE' })).json()).sites;
+      await Promise.all([ this.fetchStats(), this.fetchTweets(1) ]);
+    },
+
+    // ── Keywords ───────────────────────────────────
+    async fetchKeywords() {
+      this.keywords = (await (await fetch('/v1/admin/keywords')).json()).keywords;
+    },
+
+    async addKeyword() {
+      const pattern = this.newKeyword.trim();
+      if (!pattern) return;
+      this.keywords = (await (await fetch('/v1/admin/keywords', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pattern }),
+      })).json()).keywords;
+      this.newKeyword = '';
+      await Promise.all([ this.fetchStats(), this.fetchTweets(1) ]);
+    },
+
+    async removeKeyword(kw) {
+      this.keywords = (await (await fetch(`/v1/admin/keywords/${encodeURIComponent(kw)}`, { method: 'DELETE' })).json()).keywords;
+      await Promise.all([ this.fetchStats(), this.fetchTweets(1) ]);
+    },
+
+    // ── Tweets & stats ─────────────────────────────
+    async fetchStats() {
+      try {
+        const res = await fetch('/v1/tweets/stats');
+        if (res.status === 503) {
+          const data = await res.json();
+          this.archiveError = data.detail;
+        } else {
+          this.archiveError = null;
+          this.stats = await res.json();
+        }
+      } catch { /* silent — fetchTweets will surface it */ }
+    },
+
+    async fetchTweets(page) {
+      this.loading = true;
+      this.currentPage = page;
+      try {
+        const p = new URLSearchParams({ page, limit: this.limit });
+        if (this.search) p.set('search', this.search);
+        const res = await fetch(`/v1/tweets?${p}`);
+        if (res.status === 503) {
+          const data = await res.json();
+          this.archiveError = data.detail;
+          this.tweets = []; this.total = 0;
+        } else {
+          this.archiveError = null;
+          const data = await res.json();
+          this.tweets = data.tweets;
+          this.total = data.total;
+          this.totalPages = data.pages;
+        }
+      } catch { this.showToast('Failed to load tweets', 'error'); }
+      finally { this.loading = false; }
+    },
+
+    // ── Selection ──────────────────────────────────
+    toggleSelect(id) {
+      const c = { ...this.selectedIds };
+      c[id] ? delete c[id] : (c[id] = true);
+      this.selectedIds = c;
+    },
+
+    isPageFullySelected() {
+      return this.tweets.length > 0 && this.tweets.every(t => this.selectedIds[t.id]);
+    },
+
+    togglePageSelection() {
+      const c = { ...this.selectedIds };
+      this.isPageFullySelected()
+        ? this.tweets.forEach(t => delete c[t.id])
+        : this.tweets.forEach(t => { c[t.id] = true; });
+      this.selectedIds = c;
+    },
+
+    async selectAllMatched() {
+      this.selectingAll = true;
+      const all = {};
+      let page = 1, pages = 1;
+      try {
+        do {
+          const p = new URLSearchParams({ page, limit: 200 });
+          if (this.search) p.set('search', this.search);
+          const data = await (await fetch(`/v1/tweets?${p}`)).json();
+          data.tweets.forEach(t => { all[t.id] = true; });
+          pages = data.pages; page++;
+        } while (page <= pages);
+        this.selectedIds = all;
+        this.showToast(`Selected ${Object.keys(all).length} tweets`);
+      } catch { this.showToast('Failed to select all', 'error'); }
+      finally { this.selectingAll = false; }
+    },
+
+    clearSelection() { this.selectedIds = {}; },
+
+    // ── Delete ─────────────────────────────────────
+    etaLabel() {
+      const n = Object.keys(this.selectedIds).length;
+      const secs = n * 3.5;
+      if (secs < 60) return `~${Math.ceil(secs)}s`;
+      return `~${Math.ceil(secs / 60)} min`;
+    },
+
+    async deleteTweets() {
+      const ids = Object.keys(this.selectedIds);
+      if (!ids.length) return;
+      this.deleting = true;
+      this.deleteProgress = { done: 0, failed: 0, total: ids.length };
+
+      for (let i = 0; i < ids.length; i++) {
+        try {
+          const data = await (await fetch('/v1/tweets/delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tweet_ids: [ids[i]] }),
+          })).json();
+          this.deleteProgress = {
+            ...this.deleteProgress,
+            done:   this.deleteProgress.done   + data.deleted.length,
+            failed: this.deleteProgress.failed + data.failed.length,
+          };
+        } catch (e) {
+          this.deleteProgress = { ...this.deleteProgress, failed: this.deleteProgress.failed + 1 };
+          // Surface the first error prominently
+          if (this.deleteProgress.failed === 1) this.showToast(e?.message || 'Delete error — check credentials', 'error');
+        }
+        if (i < ids.length - 1) await new Promise(r => setTimeout(r, 3500));
+      }
+
+      const { done, failed } = this.deleteProgress;
+      this.showToast(`Deleted ${done}${failed ? ` · ${failed} failed` : ''}`, failed ? 'error' : 'success');
+      this.deleting = false;
+      this.showDeleteModal = false;
+      this.deleteProgress = null;
+      this.selectedIds = {};
+      await Promise.all([ this.fetchStats(), this.fetchTweets(this.currentPage) ]);
+    },
+
+    // ── Archive upload ─────────────────────────────
+    handleArchiveFile(e) {
+      const file = e.target.files?.[0];
+      if (file) this.uploadArchive(file);
+      e.target.value = '';
+    },
+
+    handleArchiveDrop(e) {
+      this.uploadDragging = false;
+      const file = e.dataTransfer?.files?.[0];
+      if (file) this.uploadArchive(file);
+    },
+
+    async uploadArchive(file) {
+      if (!file.name.endsWith('.js')) {
+        return this.showToast('Please select a .js file (tweets.js)', 'error');
+      }
+      this.uploadLoading = true;
+      try {
+        const fd = new FormData();
+        fd.append('file', file);
+        const res = await fetch('/v1/admin/upload-tweets', { method: 'POST', body: fd });
+        const data = await res.json();
+        if (!res.ok) return this.showToast(data.detail || 'Upload failed', 'error');
+        this.showToast(`Loaded ${data.tweet_count.toLocaleString()} tweets from archive`);
+        await Promise.all([ this.fetchStats(), this.fetchTweets(1) ]);
+      } catch { this.showToast('Upload failed — check the file and try again', 'error'); }
+      finally { this.uploadLoading = false; }
+    },
+
+    // ── Helpers ────────────────────────────────────
+    formatDate(s) {
+      if (!s) return '';
+      const d = new Date(s);
+      return isNaN(d) ? s : d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+    },
+
+    showToast(message, type = 'success') {
+      if (this._toastTimer) clearTimeout(this._toastTimer);
+      this.toast = { message, type };
+      this._toastTimer = setTimeout(() => this.toast = null, 3500);
+    },
+  };
+}
+</script>
+</body>
+</html>
