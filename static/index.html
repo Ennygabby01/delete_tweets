@@ -1289,20 +1289,30 @@ function app() {
 
       for (let i = 0; i < ids.length; i++) {
         try {
-          const data = await (await fetch('/v1/tweets/delete', {
+          const res = await fetch('/v1/tweets/delete', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ tweet_ids: [ids[i]] }),
-          })).json();
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            // HTTP-level error from FastAPI (auth, server error, etc.)
+            this.deleteProgress = { ...this.deleteProgress, failed: this.deleteProgress.failed + 1 };
+            this.showToast(data.detail || `Server error ${res.status}`, 'error');
+            break;
+          }
           this.deleteProgress = {
             ...this.deleteProgress,
             done:   this.deleteProgress.done   + data.deleted.length,
             failed: this.deleteProgress.failed + data.failed.length,
           };
+          // Surface API-level errors (e.g. rate limit, no permissions, tweet not found)
+          if (data.failed.length > 0) {
+            this.showToast(data.failed[0]?.error || 'Delete failed', 'error');
+          }
         } catch (e) {
           this.deleteProgress = { ...this.deleteProgress, failed: this.deleteProgress.failed + 1 };
-          // Surface the first error prominently
-          if (this.deleteProgress.failed === 1) this.showToast(e?.message || 'Delete error — check credentials', 'error');
+          this.showToast(e?.message || 'Delete error — check credentials', 'error');
         }
         if (i < ids.length - 1) await new Promise(r => setTimeout(r, 3500));
       }
