@@ -72,8 +72,8 @@ tweets.js (your archive)  →  local FastAPI server  →  filter & display
 
 ```bash
 # Clone the repo
-git clone https://github.com/Ennygabby01/delete-tweets.git
-cd delete-tweets
+git clone https://github.com/Ennygabby01/delete_tweets.git
+cd delete_tweets
 
 # Install dependencies
 pip install -r requirements.txt
@@ -123,7 +123,7 @@ Click **Disconnect** in the left sidebar, or go to **Settings → Account** on a
 ## Project Structure
 
 ```
-delete-tweets/
+delete_tweets/
 ├── app/
 │   ├── main.py          # FastAPI app setup, lifespan, static file serving
 │   ├── state.py         # In-memory app state (credentials, filters, deleted IDs)
