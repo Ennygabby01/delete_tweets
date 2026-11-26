@@ -19,9 +19,6 @@ reading posts. X Premium does not include API credits. Check
 
 Screenshots use a demo account and sample posts.
 
-<details>
-<summary>Sign-in, runner and activity</summary>
-
 **Sign in**
 
 ![Sign in with X](docs/screenshots/sign-in.png)
@@ -37,8 +34,6 @@ Screenshots use a demo account and sample posts.
 **Activity**
 
 ![Activity grouped by date with an expanded run and individual post outcomes](docs/screenshots/activity.png)
-
-</details>
 
 ## What you can do
 
