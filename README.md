@@ -19,21 +19,28 @@ reading posts. X Premium does not include API credits. Check
 
 Screenshots use a demo account and sample posts.
 
-**Sign in**
-
-![Sign in with X](docs/screenshots/sign-in.png)
-
-**X app setup**
-
-![Sign-in before OAuth credentials are configured, with setup instructions expanded](docs/screenshots/sign-in-setup.png)
-
-**Deletion runner**
-
-![A runner waiting for the next rate window after processing 150 posts](docs/screenshots/runner.png)
-
-**Activity**
-
-![Activity grouped by date with an expanded run and individual post outcomes](docs/screenshots/activity.png)
+<table>
+  <tr>
+    <td width="50%">
+      <strong>Sign in</strong><br />
+      <img src="docs/screenshots/sign-in.png" alt="Sign in with X" width="100%" />
+    </td>
+    <td width="50%">
+      <strong>X app setup</strong><br />
+      <img src="docs/screenshots/sign-in-setup.png" alt="Sign-in with X app setup instructions expanded" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%">
+      <strong>Deletion runner</strong><br />
+      <img src="docs/screenshots/runner.png" alt="Runner cooling down after processing 150 posts" width="100%" />
+    </td>
+    <td width="50%">
+      <strong>Activity</strong><br />
+      <img src="docs/screenshots/activity.png" alt="Grouped activity with individual post outcomes" width="100%" />
+    </td>
+  </tr>
+</table>
 
 ## What you can do
 
