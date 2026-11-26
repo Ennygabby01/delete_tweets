@@ -15,6 +15,31 @@ reading posts. X Premium does not include API credits. Check
 [X's pricing](https://docs.x.com/x-api/getting-started/pricing) and your
 [Developer Console](https://console.x.com/) for current charges and limits.
 
+![Posts with a sample selection and the next-run allowance](docs/screenshots/posts.png)
+
+Screenshots use a demo account and sample posts.
+
+<details>
+<summary>Sign-in, runner and activity</summary>
+
+**Sign in**
+
+![Sign in with X](docs/screenshots/sign-in.png)
+
+**X app setup**
+
+![Sign-in before OAuth credentials are configured, with setup instructions expanded](docs/screenshots/sign-in-setup.png)
+
+**Deletion runner**
+
+![A runner waiting for the next rate window after processing 150 posts](docs/screenshots/runner.png)
+
+**Activity**
+
+![Activity grouped by date with an expanded run and individual post outcomes](docs/screenshots/activity.png)
+
+</details>
+
 ## What you can do
 
 - Import `tweets.js` and search or filter posts locally.
