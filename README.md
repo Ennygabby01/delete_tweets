@@ -1,179 +1,213 @@
 # Tweet Deleter
 
-Bulk-delete tweets from your X/Twitter archive by domain or keyword — run locally, no data ever leaves your machine.
+[![Version](https://img.shields.io/badge/version-2.0.1-1d9bf0)](CHANGELOG.md)
+[![Python](https://img.shields.io/badge/Python-3.12%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![SQLite](https://img.shields.io/badge/SQLite-003b57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-555555)](LICENSE)
 
----
+Delete selected posts from your X account using a local archive. Filter by words
+or domains, review the selection, and run the app on your computer or your own server.
 
-## ⚠️ Security Warning — Read Before Using
+**X API requests cost credits.** This app is free to use, but X's API is a separate
+service. Funding your Developer account may be necessary for deletion as well as
+reading posts. X Premium does not include API credits. Check
+[X's pricing](https://docs.x.com/x-api/getting-started/pricing) and your
+[Developer Console](https://console.x.com/) for current charges and limits.
 
-> **This tool is for personal, local use only. Never deploy it to a public server.**
+## What you can do
 
-The web UI accepts your X Developer API credentials (Consumer Key, Consumer Secret, Access Token, Access Token Secret). If you run this on a public or shared server, anyone who can reach the URL could:
+- Import `tweets.js` and search or filter posts locally.
+- Select individual posts, a page, or all matches.
+- Review how many fit in the next run before confirming deletion.
+- Pause a run and keep its results across restarts.
+- Browse history by date, expand a run, and see each post's outcome.
+- Optionally load posts from X when you do not have an archive.
 
-- View and steal your API credentials
-- Delete tweets on your behalf
-- Use your API tokens to impersonate you
+Post reads are **off by default**. Deleting archive posts sends their saved IDs
+straight to X; it does not fetch a timeline or check each post first. This avoids
+post-read requests, but does not make deletion free.
 
-**Run this exclusively on `localhost` on your own machine.** Treat it the same as you would a local password manager — it is not designed to be internet-facing.
+## Get started
 
-This project contains no analytics, tracking, or external data collection.
+You need Python 3.12 or newer, `make`, and an X Developer app. The launcher supports macOS
+and Linux. Starting the app needs no Node process or separate database server.
 
----
+See [INSTALL.md](INSTALL.md) for full requirements, Ubuntu, Windows through WSL,
+HTTPS hosting, aaPanel/cPanel setup and backup instructions.
 
-## What It Does
-
-Tweet Deleter reads your local Twitter/X data archive (`tweets.js`) and lets you bulk-delete matched tweets through the official X API.
-
-Works beyond the X API timeline limit — tweets can be deleted from your entire history using your archive.
-
-- **Filter by domain** — finds tweets where your target domain appears in the tweet text *or* in any linked URL (even `t.co` shortened ones are expanded and checked)
-- **Filter by keyword** — matches tweets that contain specific words or phrases in the tweet text, case-insensitively
-- **Review before deleting** — browse all matched tweets, select individually, by page, or all at once
-- **Safe deletion rate** — paced at one tweet every 20 seconds, safely under the X API free-tier rate limit (~45/15 min)
-- **Upload archive in-browser** — drop your `tweets.js` file directly into the Settings page if you can't place it in the project folder
-- **Persistent credentials** — your API keys are saved to a local `credentials.json` so you don't need to re-enter them every time the server restarts; clicking Disconnect deletes the file
-- **Persistent filters** — your target sites and keywords are saved to `filters.json` and restored automatically on restart; they are not cleared when you disconnect
-- **Mobile-friendly** — responsive layout with a bottom tab bar on small screens; Disconnect is available in the Settings tab
-
----
-
-## How It Works
-
-```
-tweets.js (your archive)  →  local FastAPI server  →  filter & display
-                                                  ↓
-                                    X API  ←  delete selected tweets
-```
-
-1. **No live reading from X** — tweets are loaded from your local archive file, not fetched via the API. The API is only used for deletion.
-2. **No data sent externally** — the archive is parsed on your machine. The only outbound calls are the delete requests to `api.twitter.com`.
-3. **Session tracking** — deleted tweet IDs are tracked in memory so they disappear from the list immediately, without needing to re-parse the archive.
-
----
-
-## Requirements
-
-- Python 3.11+
-- An X Developer account with a project and app that has **Read and Write** permissions
-- Your Twitter/X data archive (`tweets.js`)
-
-### Getting Your API Credentials
-
-1. Go to [developer.twitter.com](https://developer.twitter.com) and create a project and app
-2. Under **App permissions**, set it to **Read and Write**
-3. Generate your **Consumer Key**, **Consumer Secret**, **Access Token**, and **Access Token Secret**
-4. Make sure the access token was generated *after* you set Read+Write permissions — tokens generated before that change will only have read access
-
-### Getting Your Twitter Archive
-
-1. On X (Twitter), go to **Settings → Your account → Download an archive of your data**
-2. X will email you when the archive is ready (can take up to 24 hours)
-3. Download and extract the archive — you need the `tweets.js` file inside the `data/` folder
-
----
-
-## Setup & Running
-
-```bash
-# Clone the repo
+```sh
 git clone https://github.com/Ennygabby01/delete_tweets.git
 cd delete_tweets
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Place your tweets.js in the project root (or upload it via the UI later)
-cp /path/to/your/archive/data/tweets.js .
-
-# Start the server
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+make setup
 ```
 
-Then open [http://localhost:8000](http://localhost:8000) in your browser.
+To select an interpreter explicitly, use `make setup PYTHON=python3.14` (or another
+installed Python 3.12+ interpreter).
 
-> **Important:** Use `--host 127.0.0.1`, not `0.0.0.0`. Binding to `0.0.0.0` exposes the server on your network.
+Setup creates `.venv` and a private `.env`. Add your app's **OAuth 2.0 Client ID**
+and **Client Secret** there. Keep the generated encryption key.
 
----
-
-## Usage
-
-### 1. Sign In
-Enter your four API credentials on the login screen. They are saved to `credentials.json` locally so the server auto-loads them on restart.
-
-### 2. Upload Your Archive
-If you didn't place `tweets.js` in the project root, go to **Settings → Tweet Archive** and drag-and-drop (or click to browse) your `tweets.js` file. The server validates and stores it for you.
-
-### 3. Configure Filters
-In **Settings**, add:
-- **Target Sites** — domains whose links you want to remove (e.g. `myblog.wordpress.com`). Matches both the raw tweet text and expanded URLs behind `t.co` links.
-- **Keywords** — words or phrases that appear in the tweet body (e.g. `Check out my post`). Case-insensitive.
-
-A tweet only needs to match one filter to appear in the list.
-
-### 4. Review and Delete
-Switch to the **Tweets** tab to see all matched tweets. You can:
-- Click individual tweets to select/deselect them
-- Use **Select page** to select all tweets on the current page
-- Use **Select all** to select every matched tweet across all pages
-- Use the search bar to narrow the list further before selecting
-
-Once you have a selection, click **Delete** and confirm. Deletions are paced at 1 every 20 seconds. The progress bar shows real-time status, including any failures.
-
-### 5. Disconnect
-Click **Disconnect** in the left sidebar, or go to **Settings → Account** on any screen size (including mobile). This clears the in-memory session and deletes `credentials.json` from disk. Your target sites and keywords are preserved in `filters.json` and will be restored on next login.
-
----
-
-## Project Structure
-
-```
-delete_tweets/
-├── app/
-│   ├── main.py          # FastAPI app setup, lifespan, static file serving
-│   ├── state.py         # In-memory app state (credentials, filters, deleted IDs)
-│   ├── parser.py        # tweets.js parsing and filtering logic
-│   ├── twitter.py       # X API client (Tweepy), deletion, error handling
-│   ├── credentials.py   # Save/load/clear credentials.json
-│   └── routes/
-│       ├── admin.py     # Auth, site/keyword management, archive upload
-│       └── tweets.py    # Tweet listing, stats, deletion endpoint
-├── static/
-│   └── index.html       # Single-page frontend (Alpine.js)
-├── tweets.js            # Your archive file (not committed)
-├── credentials.json     # Your API keys (not committed, created on first login)
-├── filters.json         # Saved sites + keywords (not committed, created on first add)
-└── requirements.txt
+```dotenv
+X_CLIENT_ID=your-client-id
+X_CLIENT_SECRET=your-client-secret
 ```
 
----
+In X Developer Console, open your app's **User authentication settings**:
 
-## Dependencies
+1. Enable OAuth 2.0 and select **Web App / Automated App / Bot**.
+2. Select **Read and Write** where offered.
+3. Register the callback URL printed by the launcher. At the default port it is
+   `http://127.0.0.1:8000/v1/auth/callback`.
 
-| Package | Purpose |
-|---|---|
-| `fastapi` | Web framework and API routing |
-| `uvicorn` | ASGI server |
-| `tweepy` | X (Twitter) API v1.1 client |
-| `python-multipart` | File upload support for `tweets.js` |
+```sh
+make start
+```
 
-Frontend uses [Alpine.js](https://alpinejs.dev) (loaded from CDN, no build step).
+Open the address printed in the terminal and sign in with X. Authorization uses
+the current tab and returns to the app. The first verified account becomes the
+owner of a local installation. HTTPS hosting requires a configured owner account ID.
 
----
+Both the frontend and API run from this command. If port 8000 is busy, the launcher
+reserves another loopback port and prints its address and callback. Register that
+exact callback in your X app before signing in.
 
-## Limitations (Important)
+```sh
+make start PORT=8001   # Prefer a different port
+make dev               # Reload Python changes during development
+```
 
-- **Archive only, not live timeline** — Tweet Deleter reads your static archive, not your live account. If you've posted tweets since the archive was generated, they won't appear here.
-- **No undo** — deletions via the X API are permanent. There is no way to recover deleted tweets.
-- **One archive at a time** — the server caches the parsed archive in memory. Uploading a new `tweets.js` replaces it (server restart not required).
-- **Rate limits** — X's free-tier API allows roughly 25–50 tweet deletions per 15 minutes. The 20-second delay between deletions keeps you safely under this limit.
-- **Personal API credentials required** — X does not provide a public OAuth flow for deletion tools. You must use your own developer account credentials.
+Press **Ctrl+C** to stop. With `make dev`, refresh the page after static file changes.
 
----
+## Import and delete
 
-## License
+Request your archive from **X → Settings and privacy → Your account → Download an
+archive of your data**. Extract it and find `data/tweets.js`.
 
-MIT — do whatever you like with it, but don't use it to delete other people's tweets.
+1. Open **Settings** in Tweet Deleter and import the file.
+2. Add domain or keyword filters if needed. With no filters, all available posts
+   appear. Search narrows the current view.
+3. Choose **Newest first** or **Oldest first** under **Settings → Filters → Post order**.
+   This controls the post list and new run previews. Reviewed runs keep their saved order.
+4. Select posts. On desktop, the next-run panel stays beside the list. On smaller
+   screens, the floating tool button opens it in a drawer.
+5. Choose **Review run**, check the count, and type `DELETE` to confirm.
 
----
+Deletion is permanent. A post already missing from X is marked **unavailable**,
+not counted as a new deletion. A timeout can leave the result **uncertain**; the
+app will not silently send that deletion again.
 
-Built by [GBT3K](https://github.com/Ennygabby01)
+Activity groups runs by date. Expand a row for progress, post outcomes and controls.
+Closing the browser does not erase a confirmed run. Stopping the server pauses
+work; review interrupted results before continuing.
+
+## Deletion runner
+
+Open **Settings → Developer tools → Open deletion runner** to work across multiple
+rate windows. For example, set a maximum of 500 posts and batches of 50.
+
+The runner uses your current filters, optional search and saved post order. Review the
+fixed list of included posts, then type `DELETE` to start. New imports or filter
+changes do not add posts to an already reviewed runner. Its cap limits distinct
+posts; unavailable or failed posts are not replaced to fill the cap.
+
+**Deleted posts cannot be recovered.** Pause or stop the runner from its progress
+panel or Activity. One request already in flight may still finish. Stopping does
+not undo deletions. Keep the app server running; the browser may be closed.
+Restarting the server pauses the runner and requires review before resuming.
+
+X's saved rate-limit headers determine the cooldown. When unavailable, the app uses
+its labelled fallback (`X_DELETE_WINDOW_SECONDS`, 15 minutes by default). A batch
+can be smaller than requested when the current allowance is lower. Scheduled runs
+wait out rate limits automatically; billing, permissions and uncertain outcomes
+pause for your intervention. Ordinary single runs still pause on rate limits.
+
+The displayed allowance is **requests in a rate window, not posts affordable with
+your credit balance**. No credit-balance polling or extra provider reads are added.
+Check credits in [Developer Console](https://console.x.com/).
+
+## Choose whether to allow reads
+
+Open **Settings → X connection → Allow X post reads**.
+
+- **Off:** use the archive, filters and local history. Sync and uncertain-result
+  lookups are blocked by the backend.
+- **On:** allow manual sync, older-page loading and checks of uncertain results.
+  These actions can use API credits. Enabling the switch does not start a fetch.
+
+A read already in progress can finish before the switch turns off. Account
+verification during sign-in is separate from post reading. Profile photos are
+requested during sign-in, not repeatedly during workspace refreshes.
+
+X's recent timeline has a limited history window; an archive can provide older IDs.
+Not seeing an archive post in a limited timeline does not prove it was deleted.
+
+## Limits and connection problems
+
+The next-run count uses X's rate-limit headers when available, with a conservative
+estimate before a response is received. It is not a credit-balance display. The app
+pauses on a rate limit, billing denial or access failure instead of retrying blindly.
+Changing API clients does not remove X's charges or increase your allowance.
+
+- **Billing denied:** check credits and billing access in Developer Console.
+- **App access denied:** check the app's access and write permissions.
+- **Authorization needs renewal:** use **Reconnect X** in Settings.
+- **Uncertain deletion:** enable post reads, check its result, then review before retrying.
+
+Sessions expire after inactivity and have a separate maximum lifetime. Scrolling,
+touch and keyboard activity count as use; background polling does not keep a
+session alive indefinitely. Temporary connection failures do not themselves log
+you out. Session limits and other settings are listed in [.env.example](.env.example).
+
+## Your data
+
+The archive, settings, history and credentials stay on the machine running the app,
+in the ignored `data/` directory and `.env`. X receives authorization requests,
+deletion IDs and any reads you allow.
+The browser may load your profile photo from X's image CDN. There is no analytics
+or tracking service in the app.
+
+OAuth tokens are encrypted at rest. Post text and history are not. Whoever operates
+the server controls its files and encryption key; this encryption does not prevent
+that operator from accessing saved tokens. Use a machine and hosting provider you
+trust. Never commit `.env`, `data/` or original archive and credential files.
+
+For backup, stop the app and privately copy **the entire data directory and its
+matching `.env`**. Keep them together: losing the encryption key prevents unlocking
+saved credentials. On another computer, rebuild `.venv` with `make setup`.
+
+Coming from v1? Keep your original files. The first startup copies root `tweets.js`
+and `filters.json` into SQLite. Old `credentials.json` is preserved, but v2 requires
+X sign-in. Existing schema-v1/v2 databases are backed up under `data/backups/` before upgrading
+to schema v3, which stores runner pacing. Keep the backup with its matching `.env`.
+
+This is a personal, single-account app, including when hosted on a public domain.
+There are no consumer registrations or shared workspaces. See
+[HTTPS hosting](INSTALL.md#public-https-hosting) or use a private SSH tunnel.
+
+## Development
+
+```sh
+make setup-dev
+make check
+make test
+make audit
+```
+
+Frontend checks and browserless tests need Node 24.15+. Tests use temporary SQLite
+databases and mocked X responses; they do not delete real posts. See
+[CHANGELOG.md](CHANGELOG.md) for version history.
+
+CI runs the locked setup, source checks, synthetic tests and dependency audit on
+Ubuntu with Python 3.12 and 3.15. It uses read-only repository permissions and no X
+credentials. Workflow changes take effect after they are pushed to GitHub.
+
+## License and credits
+
+Copyright © 2026 [GBT3K](https://github.com/Ennygabby01). Released under the
+[MIT License](LICENSE). You can use, change and share the code while retaining
+its copyright and license notice.
+
+Control icons are from Solar Icons via SVGRepo, with separate licenses and brand
+attributions in [static/ICONS.md](static/ICONS.md). X and GitHub marks belong to
+their respective owners. This project is not affiliated with X.
