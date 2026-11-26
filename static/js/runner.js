@@ -154,7 +154,7 @@ export function createRunner({ generation, refresh, review, notify }) {
       );
       text(
         "runner-window",
-        `X's reset time takes priority. Without headers: ${count(limits.fallback_window_seconds / 60)} minutes between batches.`,
+        `Waits when the window allowance is exhausted. Without X headers, the fallback window is ${count(limits.fallback_window_seconds / 60)} minutes.`,
       );
       text(
         "runner-allowance",

@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2] - 2026-11-26
+
+### Fixed
+
+- Smaller runner batches no longer trigger a full cooldown while X still reports
+  available requests. Real rate-limit cooldowns and restart review remain enforced.
+
 ## [2.0.1] - 2026-11-26
 
 First published 2.x release, including the 2.0 rewrite described below.
@@ -103,5 +110,6 @@ Originally tagged `v1.0` in this repository.
 - Tweepy/OAuth 1.0a credentials, persisted locally with filters in JSON files.
 - In-memory tracking of deleted IDs and paced deletion requests.
 
+[2.0.2]: https://github.com/Ennygabby01/delete_tweets/compare/v2.0.1...v2.0.2
 [2.0.1]: https://github.com/Ennygabby01/delete_tweets/compare/v1.0...v2.0.1
 [1.0.0]: https://github.com/Ennygabby01/delete_tweets/tree/v1.0

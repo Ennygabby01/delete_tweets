@@ -58,19 +58,20 @@ class Schedules:
             return True
         now = time.time()
         if plan["waiting_until"]:
-            if now < plan["waiting_until"]:
+            if quota["remaining"] <= 0 and now < plan["waiting_until"]:
                 return False
             db.execute(
-                "UPDATE run_schedule SET batch_used=0,waiting_until=0,window_started=0 WHERE run_id=?",
+                "UPDATE run_schedule SET waiting_until=0 WHERE run_id=?",
                 (run_id,),
             )
-            plan["batch_used"] = 0
-        if (
-            plan["batch_used"] >= min(plan["batch_size"], self.settings.run_max)
-            or quota["remaining"] <= 0
-        ):
+        if quota["remaining"] <= 0:
             self.wait(db, run_id, quota)
             return False
+        if plan["batch_used"] >= min(plan["batch_size"], self.settings.run_max):
+            db.execute(
+                "UPDATE run_schedule SET batch_used=0,window_started=0 WHERE run_id=?",
+                (run_id,),
+            )
         db.execute("UPDATE runs SET note='' WHERE id=? AND status='running'", (run_id,))
         return True
 

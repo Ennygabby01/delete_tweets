@@ -45,6 +45,6 @@ def test_history_deep_link_finds_page_and_does_not_leak_other_owner(ready):
 def test_app_version_is_v2_and_api_routes_remain_v1(client):
     from app import __version__
 
-    assert __version__ == client.app.version == "2.0.1"
+    assert __version__ == client.app.version == "2.0.2"
     assert client.get("/v1/session").status_code == 200
     assert client.get("/v2/session").status_code == 404

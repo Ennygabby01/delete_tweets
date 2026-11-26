@@ -1,6 +1,6 @@
 # Tweet Deleter
 
-[![Version](https://img.shields.io/badge/version-2.0.1-1d9bf0)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.2-1d9bf0)](CHANGELOG.md)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-003b57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
@@ -115,10 +115,14 @@ posts; unavailable or failed posts are not replaced to fill the cap.
 panel or Activity. One request already in flight may still finish. Stopping does
 not undo deletions. Keep the app server running; the browser may be closed.
 Restarting the server pauses the runner and requires review before resuming.
+Use `make start` for unattended runs: `make dev` reloads after source changes and
+those reloads also pause the runner.
 
 X's saved rate-limit headers determine the cooldown. When unavailable, the app uses
-its labelled fallback (`X_DELETE_WINDOW_SECONDS`, 15 minutes by default). A batch
-can be smaller than requested when the current allowance is lower. Scheduled runs
+its labelled fallback (`X_DELETE_WINDOW_SECONDS`, 15 minutes by default). Batch
+size groups the work; it does not lower X's window allowance. For example, two
+batches of 25 can finish in one window when 50 requests remain. The runner waits
+only when that allowance is exhausted or X returns a rate-limit response. Scheduled runs
 wait out rate limits automatically; billing, permissions and uncertain outcomes
 pause for your intervention. Ordinary single runs still pause on rate limits.
 

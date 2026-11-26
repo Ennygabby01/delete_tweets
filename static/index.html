@@ -363,8 +363,8 @@
             </a>
             <h2 id="runner-heading">Run across rate windows</h2>
             <p>
-              Choose a post cap and batch size. The runner waits for X’s
-              cooldown before continuing.
+              Choose a post cap and batch size. Batches share X’s remaining
+              allowance; cooldown starts when the rate window is full.
             </p>
           </div>
           <p class="runner-warning">
@@ -411,7 +411,8 @@
                     inputmode="numeric"
                   />
                   <p class="fine-print">
-                    X’s remaining allowance can make a batch smaller.
+                    Processing groups, not X’s request limit. Smaller batches
+                    can continue within the same rate window.
                   </p>
                 </div>
               </div>

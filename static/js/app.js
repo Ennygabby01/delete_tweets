@@ -433,7 +433,7 @@ function showDialog(detail) {
   text(
     "confirmation-copy",
     detail.schedule
-      ? `${count(detail.counts.pending)} posts are included, ${detail.post_order === "oldest" ? "oldest" : "newest"} first. The runner continues in batches of up to ${count(detail.schedule.batch_size)}, waiting for X's rate window between batches. Deleted posts cannot be recovered.`
+      ? `${count(detail.counts.pending)} posts are included, ${detail.post_order === "oldest" ? "oldest" : "newest"} first. The runner processes groups of up to ${count(detail.schedule.batch_size)} and waits only when X's window allowance is exhausted. Deleted posts cannot be recovered.`
       : `${count(detail.counts.pending)} ${detail.counts.pending === 1 ? "post is" : "posts are"} included in this run, ${detail.post_order === "oldest" ? "oldest" : "newest"} first.`,
   );
   previewSummary(

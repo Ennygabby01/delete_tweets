@@ -29,14 +29,14 @@ def test_schedule_freezes_cap_and_waits_without_reads_or_extra_deletes(ready, fa
     services.runs.tick()
     assert not fake.calls
     confirm(services, detail)
-    for _ in range(3):
+    for _ in range(4):
         services.runs.tick()
     result = services.runs.detail("12345", detail["id"])
-    assert result["counts"] == {"deleted": 2, "pending": 2}
+    assert result["counts"] == {"deleted": 3, "pending": 1}
     assert result["status"] == "running" and result["schedule"]["waiting_until"] > clock[0]
     for _ in range(5):
         services.runs.tick()
-    assert len(fake.calls) == 2
+    assert len(fake.calls) == 3
     clock[0] = result["schedule"]["waiting_until"] + 1
     for _ in range(4):
         services.runs.tick()
@@ -97,13 +97,13 @@ def test_pause_stop_and_restart_never_silently_resume(ready, fake, monkeypatch):
     services.runs.recover()
     clock[0] += 1000
     services.runs.tick()
-    assert len(fake.calls) == 2
+    assert len(fake.calls) == 3
     assert services.runs.detail("12345", detail["id"])["status"] == "paused"
     services.runs.stop("12345", detail["id"], cancel=True)
     with pytest.raises(AppError, match="closed"):
         confirm(services, detail)
     services.runs.tick()
-    assert len(fake.calls) == 2
+    assert len(fake.calls) == 3
 
 
 def test_uncertain_schedule_result_is_not_retried_or_replaced(ready, fake):
@@ -327,3 +327,83 @@ def test_v2_upgrade_preserves_history_and_backs_up_before_schedule_schema(tmp_pa
         assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
     db.initialize()
     assert len(list((db.directory / "backups").glob("*.sqlite3"))) == 1
+
+
+@pytest.mark.parametrize("legacy_restart", [False, True])
+def test_25_post_batches_use_the_full_50_request_window_and_clear_legacy_wait(
+    settings, fake, monkeypatch, legacy_restart
+):
+    settings = replace(settings, run_max=50, fallback_limit=50)
+    app = create_app(settings, XClient(settings, httpx.MockTransport(fake.respond)), worker=False)
+    clock = [time.time()]
+    monkeypatch.setattr(time, "time", lambda: clock[0])
+    reset = int(clock[0]) + 900
+    fake.replies.extend(
+        httpx.Response(
+            200,
+            json={"data": {"deleted": True}},
+            headers={
+                "x-rate-limit-limit": "50",
+                "x-rate-limit-remaining": str(49 - index),
+                "x-rate-limit-reset": str(reset),
+            },
+        )
+        for index in range(50)
+    )
+    with TestClient(app, base_url=settings.origin) as client:
+        signed_in(client)
+        services = app.state
+        services.archive.import_bytes(archive_bytes(60))
+        detail = plan(services, cap=50, batch=25)
+        confirm(services, detail)
+        for _ in range(25):
+            services.runs.tick()
+        half = services.runs.detail("12345", detail["id"])
+        assert half["quota"]["remaining"] == 25
+        assert half["schedule"]["waiting_until"] == 0
+        if legacy_restart:
+            with services.db.connect(write=True) as db:
+                db.execute(
+                    "UPDATE run_schedule SET waiting_until=? WHERE run_id=?", (reset, detail["id"])
+                )
+            services.runs.recover()
+            services.runs.tick()
+            assert len(fake.calls) == 25
+            assert services.runs.detail("12345", detail["id"])["status"] == "paused"
+            confirm(services, detail)
+        for _ in range(25):
+            services.runs.tick()
+        result = services.runs.detail("12345", detail["id"])
+        assert result["status"] == "completed" and result["counts"] == {"deleted": 50}
+        assert len(fake.calls) == 50 and all(c.method == "DELETE" for c in fake.calls)
+        assert clock[0] < reset
+        assert services.archive.stats()["available"] == 10
+
+
+def test_batch_25_waits_after_only_the_actual_10_remaining_requests(settings, fake, monkeypatch):
+    settings = replace(settings, run_max=50, fallback_limit=50)
+    app = create_app(settings, XClient(settings, httpx.MockTransport(fake.respond)), worker=False)
+    clock = [time.time()]
+    monkeypatch.setattr(time, "time", lambda: clock[0])
+    with TestClient(app, base_url=settings.origin) as client:
+        signed_in(client)
+        services = app.state
+        services.archive.import_bytes(archive_bytes(60))
+        with services.db.connect(write=True) as db:
+            db.execute(
+                "INSERT INTO quota VALUES(?,?,?,?,?)", ("12345", 50, 10, clock[0] + 600, clock[0])
+            )
+        detail = plan(services, cap=50, batch=25)
+        confirm(services, detail)
+        for _ in range(11):
+            services.runs.tick()
+        result = services.runs.detail("12345", detail["id"])
+        assert len(fake.calls) == 10
+        assert result["schedule"]["waiting_until"] == clock[0] + 600
+        services.runs.tick()
+        assert len(fake.calls) == 10
+        clock[0] += 601
+        for _ in range(40):
+            services.runs.tick()
+        assert services.runs.detail("12345", detail["id"])["status"] == "completed"
+        assert len(fake.calls) == 50

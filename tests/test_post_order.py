@@ -89,7 +89,7 @@ def test_scheduled_order_survives_cooldown_and_preference_change(ready, fake, mo
     detail = services.runs.preview("12345", [], True, "", "oldest-scheduled-key", schedule=(4, 2))
     assert [p["id"] for p in detail["items"]] == ["1000", "1001", "1002", "1003"]
     services.runs.confirm("12345", detail["id"], "DELETE")
-    for _ in range(3):
+    for _ in range(4):
         services.runs.tick()
     waiting = services.runs.detail("12345", detail["id"])["schedule"]["waiting_until"]
     services.post_order.save("12345", "newest")
