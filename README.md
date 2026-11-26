@@ -1,6 +1,6 @@
 # Tweet Deleter
 
-[![Version](https://img.shields.io/badge/version-2.0.2-1d9bf0)](CHANGELOG.md)
+[![Version](docs/badges/version.svg)](CHANGELOG.md)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-003b57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
