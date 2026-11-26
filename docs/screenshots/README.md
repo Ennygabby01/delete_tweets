@@ -39,6 +39,7 @@ cp output/playwright/sign-in-setup.png output/playwright/sign-in.png output/play
 ```
 
 The clock is fixed to 26 November 2026 for stable date groups and cooldown labels.
-Sign-in is 1280 × 800 and app setup is 1280 × 900; Posts and Activity are 1440 × 1120; Runner is 1440 × 1000.
+All five images use a 1440 × 1120 viewport so the README gallery has equal heights
+without stretching or cropping.
 Only the viewport and demo responses are staged; app styles and markup are unchanged.
 The additional review-modal capture stays in ignored output as a verification artifact.

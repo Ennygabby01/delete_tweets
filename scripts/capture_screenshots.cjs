@@ -6,8 +6,8 @@ async function captureScreenshots(page) {
     unexpected = [],
     calls = [];
   await page.unrouteAll({ behavior: "wait" });
+  await page.setViewportSize({ width: 1440, height: 1120 });
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   await page.clock.install({ time: new Date(now * 1000) });
   const copy = [
@@ -266,9 +266,7 @@ async function captureScreenshots(page) {
       caret: "hide",
     });
   };
-  await page.setViewportSize({ width: 1280, height: 800 });
   await capture("sign-in");
-  await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto(`${origin}/?demo=setup`);
   await page.locator("#login-setup").waitFor({ state: "visible" });
   check(
@@ -282,9 +280,8 @@ async function captureScreenshots(page) {
       "http://127.0.0.1:8000/v1/auth/callback",
     "Setup callback missing",
   );
-  await page.mouse.move(1270, 890);
+  await page.mouse.move(1430, 1110);
   await capture("sign-in-setup");
-  await page.setViewportSize({ width: 1440, height: 1120 });
   await page.goto(`${origin}/?demo=posts`);
   await page.locator("#workspace").waitFor({ state: "visible" });
   check(
@@ -298,7 +295,7 @@ async function captureScreenshots(page) {
     "Selection count mismatch",
   );
   check(await page.locator("#review").isEnabled(), "Review should be enabled");
-  await page.mouse.move(1430, 990);
+  await page.mouse.move(1430, 1110);
   await capture("posts");
 
   // Verify that review and exact confirmation gate the mock deletion.
@@ -342,7 +339,6 @@ async function captureScreenshots(page) {
 
   preview = null;
   confirmed = false;
-  await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto(`${origin}/?demo=runner#/runner`);
   await page.locator("#runner-current").waitFor({ state: "visible" });
   check(
@@ -355,7 +351,6 @@ async function captureScreenshots(page) {
     "Runner progress mismatch",
   );
   await capture("runner");
-  await page.setViewportSize({ width: 1440, height: 1120 });
   await page.goto(`${origin}/?demo=activity#/activity/${completed.id}`);
   await page.locator("#run-detail").waitFor({ state: "visible" });
   check(
