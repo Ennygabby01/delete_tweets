@@ -39,6 +39,10 @@ jobs:
         run: make setup-dev PYTHON=python
       - name: Check source
         run: make check
+      - name: Verify generated badges
+        run: |
+          make check-badges
+          git diff --exit-code -- docs/badges
       - name: Test with temporary databases and mocked X
         run: make test
       - name: Audit dependencies

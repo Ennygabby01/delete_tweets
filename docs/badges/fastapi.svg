@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="126" height="36" viewBox="0 0 126 36" role="img" aria-labelledby="title">
+  <title id="title">FastAPI</title>
+  <rect x="0.5" y="0.5" width="125" height="35" rx="11.5" fill="#15181b" stroke="#343a40" />
+  <g transform="translate(12 6)" fill="#6ee7bd">
+    <path d="M12 .0387C5.3729.0384.0003 5.3931 0 11.9988c-.001 6.6066 5.372 11.9628 12 11.9625 6.628.0003 12.001-5.3559 12-11.9625-.0003-6.6057-5.3729-11.9604-12-11.96m-.829 5.4153h7.55l-7.5805 5.3284h5.1828L5.279 18.5436q2.9466-6.5444 5.892-13.0896" />
+  </g>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif" font-size="13" font-weight="500">
+    <text x="44" y="22.5" fill="#eef2f6">FastAPI</text>
+  </g>
+</svg>

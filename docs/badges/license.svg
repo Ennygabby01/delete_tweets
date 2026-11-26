@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="155" height="36" viewBox="0 0 155 36" role="img" aria-labelledby="title">
+  <title id="title">License MIT</title>
+  <rect x="0.5" y="0.5" width="154" height="35" rx="11.5" fill="#15181b" stroke="#343a40" />
+  <g transform="translate(12 6)" fill="#c9d1d9">
+    <path d="M11 2h2v3h8v2h-2l4 8a5 5 0 0 1-10 0l4-8h-4v13h5v2H6v-2h5V7H7l4 8a5 5 0 0 1-10 0l4-8H3V5h8V2ZM3.24 14h5.52L6 8.47 3.24 14Zm12 0h5.52L18 8.47 15.24 14Z" fill-rule="evenodd" />
+  </g>
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,Arial,sans-serif" font-size="13" font-weight="500">
+    <text x="44" y="22.5" fill="#b1b8c0">License</text>
+    <text x="101" y="22.5" fill="#c9d1d9" font-weight="650">MIT</text>
+  </g>
+</svg>

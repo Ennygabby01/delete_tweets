@@ -1,10 +1,10 @@
 # Tweet Deleter
 
 [![Version](docs/badges/version.svg)](CHANGELOG.md)
-[![Python](https://img.shields.io/badge/Python-3.12%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-003b57?logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![License: MIT](https://img.shields.io/badge/license-MIT-555555)](LICENSE)
+[![Python](docs/badges/python.svg)](https://www.python.org/downloads/)
+[![FastAPI](docs/badges/fastapi.svg)](https://fastapi.tiangolo.com/)
+[![SQLite](docs/badges/sqlite.svg)](https://www.sqlite.org/)
+[![License: MIT](docs/badges/license.svg)](LICENSE)
 
 Delete selected posts from your X account using a local archive. Filter by words
 or domains, review the selection, and run the app on your computer or your own server.
@@ -198,6 +198,9 @@ make test
 make audit
 ```
 
+Version and Python badges refresh from project metadata during `make check`.
+Use `make badges` to refresh them separately; CI checks that the results are committed.
+
 Frontend checks and browserless tests need Node 24.15+. Tests use temporary SQLite
 databases and mocked X responses; they do not delete real posts. See
 [CHANGELOG.md](CHANGELOG.md) for version history.
@@ -214,4 +217,5 @@ its copyright and license notice.
 
 Control icons are from Solar Icons via SVGRepo, with separate licenses and brand
 attributions in [static/ICONS.md](static/ICONS.md). X and GitHub marks belong to
-their respective owners. This project is not affiliated with X.
+their respective owners. Badge logo sources are listed in
+[docs/badges/ICONS.md](docs/badges/ICONS.md). This project is not affiliated with X.

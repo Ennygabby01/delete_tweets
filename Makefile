@@ -2,10 +2,11 @@ SHELL := /bin/sh
 .DEFAULT_GOAL := help
 
 PYTHON ?= python3
+MIN_PYTHON := 3.12
 VENV_PYTHON := .venv/bin/python
 PORT_ARG := $(if $(PORT),--port "$(PORT)",)
 
-.PHONY: help setup setup-dev start dev check check-python check-frontend test audit
+.PHONY: help setup setup-dev start dev badges check check-badges check-python check-frontend test audit
 
 help:
 	@printf '%s\n' \
@@ -13,17 +14,18 @@ help:
 	  'make setup-dev  Also install locked verification tools' \
 	  'make start      Start frontend + API; local auto-port, HTTPS fixed port' \
 	  'make dev        Start frontend + API with Python reload' \
-	  'make check      Python + frontend nonvisual source checks' \
+	  'make badges     Refresh local version and Python badges' \
+	  'make check      Refresh badges; Python + frontend source checks' \
 	  'make test       Run isolated SQLite and HTTP tests' \
 	  'make audit      Check installed dependencies for known advisories' \
 	  'Override preferred port: make start PORT=8001. Stop with Ctrl+C.'
 
 setup:
 	@if [ ! -e .venv ] && [ ! -L .venv ]; then \
-	  "$(PYTHON)" -c 'import sys; assert sys.version_info[:2] >= (3, 12), "Use Python 3.12 or newer"' && \
+	  "$(PYTHON)" -c 'import sys; assert sys.version_info[:2] >= tuple(map(int, "$(MIN_PYTHON)".split("."))), "Use Python $(MIN_PYTHON) or newer"' && \
 	  "$(PYTHON)" -m venv .venv; \
-	elif ! "$(VENV_PYTHON)" -c 'import sys; assert sys.version_info[:2] >= (3, 12)' >/dev/null 2>&1; then \
-	  printf '%s\n' 'Existing .venv is broken or is older than Python 3.12. Move it aside, then rerun make setup.' >&2; \
+	elif ! "$(VENV_PYTHON)" -c 'import sys; assert sys.version_info[:2] >= tuple(map(int, "$(MIN_PYTHON)".split(".")))' >/dev/null 2>&1; then \
+	  printf '%s\n' 'Existing .venv is broken or is older than Python $(MIN_PYTHON). Move it aside, then rerun make setup.' >&2; \
 	  exit 1; \
 	fi
 	"$(VENV_PYTHON)" -m pip install -r requirements.lock
@@ -38,7 +40,13 @@ start:
 dev:
 	"$(VENV_PYTHON)" scripts/serve.py --reload $(PORT_ARG)
 
-check: check-python check-frontend
+badges:
+	"$(VENV_PYTHON)" scripts/update_badges.py
+
+check-badges:
+	"$(VENV_PYTHON)" scripts/update_badges.py --check
+
+check: badges check-python check-frontend
 
 check-python:
 	"$(VENV_PYTHON)" -m pip check
